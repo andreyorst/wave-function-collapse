@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <script src="js/main.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wave Function Collapse</title>
+  </head>
+  <body>
+    <main>
+      <div class="info">
+        <h1>Wave Function Collapse</h1>
+        <a href="https://andreyorst.gitlab.io" class="blog_link">Andrey Listopadov</a>
+      </div>
+      <hr>
+      <p>
+        This is a demo page for my post about the wave function collapse algorithm in ClojureScript.
+        If you're interested, you can read more <a href="https://andreyorst.gitlab.io/posts/2022-05-10-wave-function-collapse-algorithm-in-clojurescript/">here</a>.
+      </p>
+      <div class="sample_view">
+        <div class="canvas_container">
+          <input type="file" id="sample_input" accept="image/*" hidden></input>
+          <label for="sample_input"><canvas id="sample_view" width="512" height="512" class="image_button"></canvas></label>
+        </div>
+        <span id="sample_error" class="error">no error</span>
+        <div class="tile_size">
+          <input type="number" id="tile_size" placeholder="Tile size (px)" class="size"></input>
+          <button type="button" id="set_tile_size" class="button">Set tile size</button>
+        </div>
+      </div>
+      <div class="render_view">
+        <div class="canvas_container">
+          <canvas id="render_view" width="512" height="512"></canvas>
+        </div>
+        <span class="error" id="render_error">no error</span>
+        <div class="world_size">
+          <input type="number" id="world_width" placeholder="Width (tiles)" class="size"></input>
+          <span>x</span></span>
+          <input type="number" id="world_height" placeholder="Height (tiles)" class="size"></input>
+          <button type="button" id="set_world_size" class="button">Resize</button>
+          <button type="button" id="render" class="button">Generate</button>
+        </div>
+      </div>
+      <p>
+        To use, upload a sample image by clicking on a canvas, and split the image into tiles of specified size.
+        For ideal results, an image should be constructed from tiles that have exactly the same pixels (no compression).
+        After that, press the <kbd>Generate</kbd> button to see the results.
+      </p>
+      <p>
+        Here are some pre-defined samples to try:
+      </p>
+      <div class="cards">
+        <div class="card">
+          <button type="button" id="cave" hidden></button>
+          <label for="cave">
+            <img src="cave.png" width="128px" height="auto" class="image_button">
+          </label>
+          <a href="https://adamatomic.itch.io/cavernas">Cavernas<br>by Adam Saltsman</a>
+        </div>
+        <div class="card">
+          <button type="button" id="sea_town" hidden></button>
+          <label for="sea_town">
+            <img src="sea_town.png" width="128px" height="auto" class="image_button">
+          </label>
+          <a href="https://adamatomic.itch.io/kyst">Kyst<br>by Adam Saltsman</a>
+        </div>
+        <div class="card">
+          <button type="button" id="purple_basement" hidden></button>
+          <label for="purple_basement">
+            <img src="purple_basement.png" width="128px" height="auto" class="image_button">
+          </label>
+          <a href="https://petricakegames.itch.io/cosmic-lilac">Cosmic Lilac<br>by PetricakeGames</a>
+        </div>
+        <div class="card">
+          <button type="button" id="desert" hidden></button>
+          <label for="desert">
+            <img src="desert.png" width="128px" height="auto" class="image_button">
+          </label>
+          <a href="https://beyonderboy.itch.io/desert-map-tileset-16x16">Desert<br>by BeyonderBoy</a>
+        </div>
+        <div class="card">
+          <button type="button" id="water_structures" hidden></button>
+          <label for="water_structures">
+            <img src="water_structures.png" width="128px" height="auto" class="image_button">
+          </label>
+          <a href="https://statoasty.itch.io/tileset-structures-on-water">Structures on water<br>by Sta.Toasty</a>
+        </div>
+        <div class="card">
+          <button type="button" id="desert_cave" hidden></button>
+          <label for="desert_cave">
+            <img src="desert_cave.png" width="128px" height="auto" class="image_button">
+          </label>
+          <a href="https://trixelized.itch.io/desert-ruins">Desert Ruins<br>by Trixie</a>
+        </div>
+      </div>
+      <p>
+        Source code is available <a href="https://gitlab.com/andreyorst/wave-function-collapse-in-clojurescript">here</a>
+      <p>
+        <script>
+          window.onload = function() {
+            wfc.core.init();
+          };
+        </script>
+        <hr>
+    </main>
+    <footer>
+      <div class="footer_container">
+        <div class="footer_content">
+          © Andrey Listopadov 2022 · This work is licensed under a <a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a> · This site source code is MIT licensed.
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
