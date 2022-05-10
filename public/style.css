@@ -61,10 +61,7 @@ html {
 
 main {
   max-width: 640px;
-  min-width: 512px;
   margin: 0 auto;
-  padding-left: 1em;
-  padding-right: 1em;
 }
 
 body {
@@ -73,6 +70,7 @@ body {
   margin: 0;
   font-family: Helvetica, Arial, sans-serif;
   line-height: 1.75;
+  padding: 0 20px;
 }
 
 hr {
@@ -105,7 +103,7 @@ strong, b {
 h1, .blog_link {
   font-size: 1.4em;
   font-weight: bold;
-  margin: 1.5em 0 1em 0;
+  margin: 20px 20px 10px 0;
   line-height: 1em;
 }
 
@@ -133,6 +131,7 @@ h1, .blog_link {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  flex-wrap: wrap;
 }
 
 .canvas_container {
@@ -160,11 +159,14 @@ h1, .blog_link {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-evenly;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 512px;
 }
 
 .card {
   display: block;
-  width: 148px;
+  width: 138px;
   margin: 10px;
   font-size: 0.8em;
 }
@@ -202,11 +204,14 @@ kbd {
 
 footer {
   margin-top: 1em;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .footer_container {
   text-align: center;
-  padding: 0.5em 0;
+  padding: 0 20px;
 }
 
 .footer_content {
@@ -214,6 +219,11 @@ footer {
   max-width: 640px;
   margin: 0 auto;
   line-height: 1.25;
+}
+
+@media (max-width: 552px) {
+  main { font-width: 14px; }
+  h1, .blog_link { font-width: 16px; }
 }
 
 @media (prefers-color-scheme: dark) {

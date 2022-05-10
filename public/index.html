@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <script src="js/main.js"></script>
     <link rel="stylesheet" href="style.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Wave Function Collapse</title>
   </head>
   <body>
@@ -21,7 +21,7 @@
       <div class="sample_view">
         <div class="canvas_container">
           <input type="file" id="sample_input" accept="image/*" hidden></input>
-          <label for="sample_input"><canvas id="sample_view" width="512" height="512" class="image_button"></canvas></label>
+          <label for="sample_input"><canvas id="sample_view" width="320" height="320" class="image_button"></canvas></label>
         </div>
         <span id="sample_error" class="error">no error</span>
         <div class="tile_size">
@@ -31,7 +31,7 @@
       </div>
       <div class="render_view">
         <div class="canvas_container">
-          <canvas id="render_view" width="512" height="512"></canvas>
+          <canvas id="render_view" width="320" height="320"></canvas>
         </div>
         <span class="error" id="render_error">no error</span>
         <div class="world_size">
