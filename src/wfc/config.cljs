@@ -1,8 +1,12 @@
-(ns wfc.config)
+(ns wfc.config
+  (:require [wfc.wfc :refer [clamp]]))
 
 (defonce ^:dynamic *tile-size* nil)
-(defonce max-world-pixel-height 512)
-(defonce max-world-pixel-width 512)
+(defonce mobile? (.-matches (js/window.matchMedia "(max-width: 552px)")))
+(defonce client-width js/document.documentElement.clientWidth)
+;; Make sure that the output is divisable by 32 to make all samples work on mobile
+(defonce max-world-pixel-height (if mobile? (* (Math/floor (/ (- client-width 40) 32)) 32) 512))
+(defonce max-world-pixel-width max-world-pixel-height)
 
 (defn get-text-input-value [id]
   (when-let [tile-size (.getElementById js/document id)]
@@ -16,8 +20,10 @@
   ([canvas grid-size] (init-canvas canvas grid-size ""))
   ([canvas grid-size text]
    (let [ctx (.getContext canvas "2d")
-         width (.-width canvas)
-         height (.-height canvas)]
+         width (clamp 0 (.-width canvas) max-world-pixel-width)
+         height (clamp 0 (.-height canvas) max-world-pixel-height)]
+     (set! (.-width canvas) width)
+     (set! (.-height canvas) height)
      (set! (.-fillStyle ctx)  "#dcdcdc")
      (set! (.-textBaseline ctx) "middle")
      (set! (.-textAlign ctx) "center")
