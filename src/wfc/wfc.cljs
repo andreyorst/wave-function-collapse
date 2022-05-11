@@ -36,9 +36,11 @@
   (frequencies (apply concat sample)))
 
 (defn cell-enthropy [cell weights]
-  (let [weight-sum (reduce + (map #(get weights %) cell))
-        log-weight-sum (reduce + (map #(let [weight (get weights %)]
-                                         (* weight (Math/log (double weight)))) cell))]
+  (let [[weight-sum log-weight-sum]
+        (reduce (fn [[weight-sum log-weight-sum] variant]
+                  (let [weight (get weights variant)]
+                    [(+ weight-sum weight)
+                     (+ log-weight-sum (* weight (Math/log (double weight))))])) [0 0] cell)]
     (Math/log (- weight-sum (/ log-weight-sum weight-sum)))))
 
 (defn done? [world]
