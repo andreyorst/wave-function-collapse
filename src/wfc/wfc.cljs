@@ -35,29 +35,44 @@
 (defn sample-weights [sample]
   (frequencies (apply concat sample)))
 
-(defn cell-enthropy [cell weights]
-  (let [[weight-sum log-weight-sum]
-        (reduce (fn [[weight-sum log-weight-sum] variant]
-                  (let [weight (get weights variant)]
-                    [(+ weight-sum weight)
-                     (+ log-weight-sum (* weight (Math/log (double weight))))])) [0 0] cell)]
-    (Math/log (- weight-sum (/ log-weight-sum weight-sum)))))
+(defn cell-entropy [cell weights]
+  (loop [variants cell
+         weight-sum 0
+         log-weight-sum 0]
+    (if-let [[variant & variants] variants]
+      (let [weight (get weights variant)]
+        (recur variants
+               (+ weight-sum weight)
+               (+ log-weight-sum (* weight (Math/log (double weight))))))
+      (Math/log (- weight-sum (/ log-weight-sum weight-sum))))))
 
 (defn done? [world]
   (not (some set? (flatten world))))
 
 (defn lowest-entropy-cell [world weights]
-  (let [enthropies (->> world
-                        (map-indexed
-                         (fn [x r]
-                           (keep-indexed
-                            (fn [y cell]
-                              (when (set? cell)
-                                [(cell-enthropy cell weights) [x y]])) r)))
-                        (reduce into (sorted-map)))]
-    (if-some [[_ c] (first enthropies)]
-      c
-      [0 0])))
+  (loop [x 0
+         [row & rows] world
+         entropies (sorted-map)]
+    (if (seq row)
+      (let [row-entropy
+            (loop [y 0
+                   [column & columns] row
+                   entropies (sorted-map)]
+              (if column
+                (recur (inc y)
+                       columns
+                       (if (set? column)
+                         (assoc entropies (cell-entropy column weights) [x y])
+                         entropies))
+                (first entropies)))]
+        (recur (inc x)
+               rows
+               (if row-entropy
+                 (conj entropies row-entropy)
+                 entropies)))
+      (if-let [[_ c] (first entropies)]
+        c
+        [0 0]))))
 
 (defn weighted-random [elements weights]
   (let [variants (reduce (fn [m k] (assoc m k (weights k))) {} elements)
@@ -76,30 +91,34 @@
   [world recipe pos]
   (let [cell (get-in world pos)
         neighbors (get-neighbors world pos)
-        neighboring-cells (map :pos (vals neighbors))
-        world' (reduce
-                (fn [world [dir {pos :pos}]]
-                  (let [c (get-in world pos)
-                        variants (set/intersection
-                                  (if (coll? c) (set c) #{c})
-                                  (if (set? cell)
-                                    (into #{} (mapcat #(get-in recipe [% dir])) cell)
-                                    (get-in recipe [cell dir])))]
-                    (if (and (set? c) (seq variants))
-                      (collapse world pos variants)
-                      world)))
-                world neighbors)]
-    [world'
-     (when-not (= world' world) neighboring-cells)]))
+        neighboring-cells (map :pos (vals neighbors))]
+    (loop [neighbors neighbors
+           world world]
+      (if-let [[neighbor & neighbors] neighbors]
+        (let [[dir {pos :pos}] neighbor
+              c (get-in world pos)]
+          (if (set? c)
+            (let [variants (set/intersection
+                            (if (coll? c) (set c) #{c})
+                            (if (set? cell)
+                              (into #{} (mapcat #(get-in recipe [% dir])) cell)
+                              (get-in recipe [cell dir])))]
+              (if (seq variants)
+                (recur neighbors (collapse world pos variants))
+                (recur neighbors world)))
+            (recur neighbors world)))
+        [world neighboring-cells]))))
 
 (defn collapse-neighbors [world recipe pos]
   (loop [neighbors [pos]
          world world]
     (if (seq neighbors)
-      (let [pos (first neighbors)
-            [world next] (collapse-neighbors* world recipe pos)]
-        (recur (concat (rest neighbors) next)
-               world))
+      (let [[pos & neighbors] neighbors
+            [world' next] (collapse-neighbors* world recipe pos)]
+        (recur (if (= world world')
+                 neighbors
+                 (concat neighbors next))
+               world'))
       world)))
 
 (defn gen-world [max-x max-y]
