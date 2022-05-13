@@ -129,12 +129,25 @@
   (let [superpos (get-superposition sample)]
     (mapv (fn [r] (mapv (fn [c] (if (nil? c) superpos c)) r)) world)))
 
+(defn init-world [world sample recipe]
+  (let [pre-filled? (some some? (flatten world))
+        width (count (first world))
+        height (count world)
+        world (populate-world world sample)]
+    (if pre-filled?
+      (reduce (fn [world pos]
+                (collapse-neighbors world recipe pos))
+              world
+              (for [x (range width)
+                    y (range height)]
+                [x y]))
+      world)))
+
 (defn wfc [world sample]
   (let [recipe (build-recipe sample)
         weights (sample-weights sample)]
-    (loop [world (populate-world world sample)
-           pos [(rand-int (count (first world)))
-                (rand-int (count world))]]
+    (loop [world (init-world world sample recipe)
+           pos (lowest-entropy-cell world weights)]
       (if-not (done? world)
         (let [cell (get-in world pos)
               world (-> world

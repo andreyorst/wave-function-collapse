@@ -221,6 +221,10 @@ footer {
   line-height: 1.25;
 }
 
+.sneaky {
+  color: #aaa;
+}
+
 @media (max-width: 552px) {
   main { font-width: 14px; }
   h1, .blog_link { font-width: 16px; }
@@ -231,4 +235,5 @@ footer {
   a {color: #7a5fa4;}
   a:hover {color: #7a5fa4;}
   kbd {background-color: #161b22; color: #dedddc; border: solid 1px rgb(57, 63, 71); border-bottom-color: rgb(37, 43, 51);}
+  .sneaky { color: #444; }
 }

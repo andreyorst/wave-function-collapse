@@ -1,7 +1,7 @@
 (ns wfc.config
   (:require [wfc.wfc :refer [clamp]]))
 
-(defonce ^:dynamic *tile-size* nil)
+(defonce tile-size nil)
 (defonce mobile? (.-matches (js/window.matchMedia "(max-width: 552px)")))
 (defonce client-width js/document.documentElement.clientWidth)
 ;; Make sure that the output is divisable by 32 to make all samples work on mobile

@@ -36,7 +36,7 @@
         <span class="error" id="render_error">no error</span>
         <div class="world_size">
           <input type="number" id="world_width" placeholder="Width (tiles)" class="size"></input>
-          <span>x</span></span>
+          <span>x</span>
           <input type="number" id="world_height" placeholder="Height (tiles)" class="size"></input>
           <button type="button" id="set_world_size" class="button">Resize</button>
           <button type="button" id="render" class="button">Generate</button>
@@ -46,6 +46,12 @@
         To use, upload a sample image by clicking on a canvas, and split the image into tiles of specified size.
         For ideal results, an image should be constructed from tiles that have exactly the same pixels (no compression).
         After that, press the <kbd>Generate</kbd> button to see the results.
+      </p>
+      <p>
+        Additionally, you can click on the rednering canvase and use <kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> keys to scroll the view.
+        To release the focus press <kbd>Esc</kbd>.
+        The image will be shifted in the respecing direction, and a new portion will be generated based on the old one.
+        <span class="sneaky">This sometimes produces incorrect images, and I'm not sure why.</span>
       </p>
       <p>
         Here are some pre-defined samples to try:
