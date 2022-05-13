@@ -9,7 +9,7 @@
     (config/init-canvas sample-view 32 "click to upload sample"))
   (when-let [render-view (.getElementById js/document "render_view")]
     (config/init-canvas render-view 32)
-    (.addEventListener render-view "mousedown" input/on-click))
+    (.addEventListener render-view "mousedown" input/grab-focus!))
   (when-let [sample-input (.getElementById js/document "sample_input")]
     (.addEventListener sample-input "change" sample/upload))
   (when-let [render-button (.getElementById js/document "render")]

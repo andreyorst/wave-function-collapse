@@ -1,28 +1,27 @@
 (ns wfc.input
   (:require [wfc.render :refer [move]]))
 
-(defonce focus false)
+(defonce focus (atom false))
 
-(defn on-click [_event]
-  (set! focus true))
+(defn grab-focus! [_]
+  (reset! focus true))
 
-(defn release-focus []
-  (set! focus false))
+(defn release-focus! []
+  (reset! focus false))
 
-(defonce valid-key? #{"Escape" "ArrowLeft" "ArrowUp" "ArrowRight" "ArrowDown"})
+(defonce valid-key?
+  #{"Escape" "ArrowLeft" "ArrowUp" "ArrowRight" "ArrowDown"})
 
-(defn on-key-press
-  "Updates key state when key is pressed."
-  [event]
-  (when focus
-    (let [event (if event event (. js/window -event))
-          key (.-key event)]
+(defn on-key-press [event]
+  (when @focus
+    (let [event (or event js/window.event)
+          key event.key]
       (when (valid-key? key)
         (.preventDefault event)
         (case key
-          "Escape" (release-focus)
-          "ArrowLeft" (move "left")
-          "ArrowUp" (move "up")
-          "ArrowRight" (move "right")
-          "ArrowDown" (move "down")
+          "Escape" (release-focus!)
+          "ArrowLeft" (move :left)
+          "ArrowUp" (move :up)
+          "ArrowRight" (move :right)
+          "ArrowDown" (move :down)
           nil)))))

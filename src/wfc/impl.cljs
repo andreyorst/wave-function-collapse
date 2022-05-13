@@ -1,15 +1,10 @@
-(ns wfc.wfc
+(ns wfc.impl
   (:require [clojure.set :as set]))
 
-(defn get-superposition [sample]
+(defn- get-superposition [sample]
   (into #{} (flatten sample)))
 
-(defn clamp [lo x hi]
-  (cond (< x lo) lo
-        (> x hi) hi
-        :else x))
-
-(defn get-neighbors [m [x y]]
+(defn- get-neighbors [m [x y]]
   (->> {:up [(dec x) y]
         :down [(inc x) y]
         :left [x (dec y)]
@@ -19,7 +14,7 @@
                      (when-some [cell (get-in m pos)]
                        [dir {:pos pos :cell cell}]))))))
 
-(defn build-recipe [sample]
+(defn- build-recipe [sample]
   (->> sample
        (map-indexed
         (fn [x r]
@@ -32,10 +27,10 @@
        flatten
        (apply merge-with #(merge-with set/union %1 %2))))
 
-(defn sample-weights [sample]
+(defn- sample-weights [sample]
   (frequencies (apply concat sample)))
 
-(defn cell-entropy [cell weights]
+(defn- cell-entropy [cell weights]
   (loop [variants cell
          weight-sum 0
          log-weight-sum 0]
@@ -46,10 +41,10 @@
                (+ log-weight-sum (* weight (Math/log (double weight))))))
       (Math/log (- weight-sum (/ log-weight-sum weight-sum))))))
 
-(defn done? [world]
+(defn- done? [world]
   (not (some set? (flatten world))))
 
-(defn lowest-entropy-cell [world weights]
+(defn- lowest-entropy-cell [world weights]
   (loop [x 0
          [row & rows] world
          entropies (sorted-map)]
@@ -74,20 +69,20 @@
         c
         [0 0]))))
 
-(defn weighted-random [elements weights]
+(defn- weighted-random [elements weights]
   (let [variants (reduce (fn [m k] (assoc m k (weights k))) {} elements)
         weights (reductions #(+ % %2) (vals variants))
         rnd (rand-int (last weights))]
     (nth (keys variants) (count (take-while #(<= % rnd) weights)))))
 
-(defn collapse
+(defn- collapse
   [world [x y] val]
   (if (and (coll? val)
            (= 1 (count val)))
     (assoc-in world [x y] (first val))
     (assoc-in world [x y] val)))
 
-(defn collapse-neighbors*
+(defn- collapse-neighbors*
   [world recipe pos]
   (let [cell (get-in world pos)
         neighbors (get-neighbors world pos)
@@ -109,7 +104,7 @@
             (recur neighbors world)))
         [world neighboring-cells]))))
 
-(defn collapse-neighbors [world recipe pos]
+(defn- collapse-neighbors [world recipe pos]
   (loop [neighbors [pos]
          world world]
     (if (seq neighbors)
@@ -121,15 +116,11 @@
                world'))
       world)))
 
-(defn gen-world [max-x max-y]
-  (mapv vec (for [_ (range max-x)]
-              (for [_ (range max-y)] nil))))
-
-(defn populate-world [world sample]
+(defn- populate-world [world sample]
   (let [superpos (get-superposition sample)]
     (mapv (fn [r] (mapv (fn [c] (if (nil? c) superpos c)) r)) world)))
 
-(defn init-world [world sample recipe]
+(defn- init-world [world sample recipe]
   (let [pre-filled? (some some? (flatten world))
         width (count (first world))
         height (count world)
@@ -142,6 +133,15 @@
                     y (range height)]
                 [x y]))
       world)))
+
+(defn clamp [lo x hi]
+  (cond (< x lo) lo
+        (> x hi) hi
+        :else x))
+
+(defn gen-world [max-x max-y]
+  (mapv vec (for [_ (range max-x)]
+              (for [_ (range max-y)] nil))))
 
 (defn wfc [world sample]
   (let [recipe (build-recipe sample)
