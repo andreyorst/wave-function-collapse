@@ -223,6 +223,12 @@ footer {
   color: #ccc;
 }
 
+.cross {
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+}
+
 @media (max-width: 552px) {
   main { font-width: 14px; }
   h1, .blog_link { font-width: 16px; }
