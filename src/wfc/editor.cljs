@@ -115,8 +115,8 @@
               (cu/draw render-view tile x y size))
             (let [ctx (.getContext render-view "2d")]
               (set! (. ctx -fillStyle)
-                    (if (or (and (odd? (/ x 32)) (even? (/ y 32)))
-                            (and (even? (/ x 32)) (odd? (/ y 32)))) cu/canvas-base
+                    (if (or (and (odd? (/ x size)) (even? (/ y size)))
+                            (and (even? (/ x size)) (odd? (/ y size)))) cu/canvas-base
                         cu/canvas-check))
               (.fillRect ctx x y size size))))))))
 
