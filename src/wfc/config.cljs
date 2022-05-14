@@ -2,6 +2,12 @@
   (:require [wfc.impl :refer [clamp]]))
 
 (defonce tile-size (atom nil))
+(defonce sample (atom []))
+(defonce tiles (atom {}))
+(defonce image
+  (atom {:image nil
+         :width 0
+         :height 0}))
 
 ;; Make sure that the output is divisable by 32 to make all samples work on mobile
 (defonce max-world-pixel-height

@@ -2,19 +2,14 @@
   (:require
    [wfc.impl :as impl]
    [wfc.sample :as sample]
-   [wfc.config :as config]))
+   [wfc.config :as config]
+   [wfc.canvas-utils :as cu]))
 
 (defonce world-state (atom nil))
 
-(defn- draw [ctx image x y size]
-  (let [arr (js/Uint8ClampedArray. image.data)
-        place (.getImageData ctx x y size size)]
-    (.set place.data arr)
-    (.putImageData ctx place x y)))
-
 (defn- solve [world ctx size]
-  (let [tiles @sample/tiles
-        world (impl/wfc world @sample/sample)
+  (let [tiles @config/tiles
+        world (impl/wfc world @config/sample)
         fallback (js/Image.)]
     (reset! world-state world)
     (loop [world world
@@ -23,7 +18,7 @@
         (loop [row row
                y 0]
           (when-let [[cell & cells] row]
-            (draw ctx (get tiles cell fallback) x y size)
+            (cu/draw ctx (get tiles cell fallback) x y size)
             (recur cells (+ y size))))
         (recur rows (+ x size))))))
 
