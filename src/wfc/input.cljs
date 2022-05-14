@@ -1,5 +1,6 @@
 (ns wfc.input
-  (:require [wfc.render :refer [move]]))
+  (:require
+   [wfc.render :refer [move]]))
 
 (defonce valid-key?
   #{"ArrowLeft" "ArrowUp" "ArrowRight" "ArrowDown"})

@@ -1,5 +1,6 @@
 (ns wfc.impl
-  (:require [clojure.set :as set]))
+  (:require
+   [clojure.set :as set]))
 
 (defn- get-superposition [sample]
   (into #{} (flatten sample)))

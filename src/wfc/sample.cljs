@@ -1,8 +1,10 @@
 (ns wfc.sample
-  (:require [wfc.config :as config]
-            [wfc.impl :refer [clamp]]
-            [wfc.canvas-utils :as cu]
-            [wfc.editor :as editor]))
+  (:require
+   [wfc.canvas-utils :as cu]
+   [wfc.config :as config]
+   [wfc.editor :as editor]
+   [wfc.impl :refer [clamp]]
+   [wfc.render :as render]))
 
 (defn split-to-tiles [{:keys [width height image]} tile-size]
   (let [canvas (cu/create-canvas width height)
@@ -27,8 +29,10 @@
               (reset! config/tile-size nil)
               (set! viewer.width width)
               (set! viewer.height height)
+              (editor/hide-tile-picker)
               (.clearRect ctx 0 0 viewer.width viewer.height)
-              (.drawImage ctx img 0 0))
+              (.drawImage ctx img 0 0)
+              (reset! render/world-state nil))
            (.addEventListener img "load"))
       (set! img.src event.target.result))))
 
@@ -71,6 +75,7 @@
                         (set! viewer.height height)
                         (set-tile-size! tile-size)
                         (cu/draw-grid viewer tile-size)
-                        (editor/draw-tile-picker)))]
+                        (editor/draw-tile-picker)
+                        (reset! render/world-state nil)))]
         (.addEventListener img "load" handler)
         (set! img.src sample)))))

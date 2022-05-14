@@ -1,6 +1,7 @@
 (ns wfc.canvas-utils
-  (:require [wfc.config :as config]
-            [wfc.impl :refer [clamp]]))
+  (:require
+   [wfc.config :as config]
+   [wfc.impl :refer [clamp]]))
 
 (defonce canvas-base "#dcdcdc")
 (defonce canvas-check "#eee")

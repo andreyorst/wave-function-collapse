@@ -31,7 +31,8 @@
             size @config/tile-size]
         (.clearRect ctx 0 0 width height)
         (solve (or @world-state
-                   (impl/gen-world (/ width size) (/ height size))) ctx size)))
+                   (impl/gen-world (/ width size) (/ height size)))
+               ctx size)))
      (config/display-error "render_error" "Please set tile size")))
 
 (defn- shift [world dir]

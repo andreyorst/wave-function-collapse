@@ -1,10 +1,10 @@
 (ns wfc.core
-  (:require [wfc.render :as render]
-            [wfc.sample :as sample]
-            [wfc.config :as config]
-            [wfc.input :as input]
-            [wfc.editor :as editor]
-            [wfc.canvas-utils :as cu]))
+  (:require
+   [wfc.canvas-utils :as cu]
+   [wfc.editor :as editor]
+   [wfc.input :as input]
+   [wfc.render :as render]
+   [wfc.sample :as sample]))
 
 (defn ^:export init []
   (when-let [sample-view (.getElementById js/document "sample_view")]
@@ -26,7 +26,7 @@
       (.addEventListener tile-view type editor/on-press))
     (doseq [type ["mouseup" "touchend"]]
       (.addEventListener tile-view type editor/on-release)))
-  (set! (. js/window -onkeydown) input/on-key-press)
+  (set! (.-onkeydown js/window) input/on-key-press)
   (doseq [img ["cave"
                "sea_town"
                "purple_basement"

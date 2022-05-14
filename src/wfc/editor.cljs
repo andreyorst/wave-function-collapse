@@ -1,8 +1,9 @@
 (ns wfc.editor
-  (:require [wfc.config :as config]
-            [wfc.canvas-utils :as cu]
-            [wfc.render :as render]
-            [wfc.impl :as impl]))
+  (:require
+   [wfc.canvas-utils :as cu]
+   [wfc.config :as config]
+   [wfc.impl :as impl]
+   [wfc.render :as render]))
 
 (defonce margin 2)                      ; px
 (defonce tile-grid (atom {}))
@@ -47,6 +48,10 @@
         (.stroke)
         .closePath)
       (reset! tile-picker (.getImageData ctx 0 0 tile-viewer.width tile-viewer.height)))))
+
+(defn hide-tile-picker []
+  (when-let [tile-viewer (.getElementById js/document "tile_view")]
+    (set! tile-viewer.height "0px")))
 
 (defn snap-to-grid [x y size]
   (let [x (* (Math/floor (/ x size)) size)
