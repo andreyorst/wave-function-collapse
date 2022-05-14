@@ -26,13 +26,13 @@
               (reset! config/image {:image img
                                     :width width
                                     :height height})
-              (reset! config/tile-size nil)
+              (reset! config/*tile-size nil)
               (set! viewer.width width)
               (set! viewer.height height)
               (editor/hide-tile-picker)
               (.clearRect ctx 0 0 viewer.width viewer.height)
               (.drawImage ctx img 0 0)
-              (reset! render/world-state nil))
+              (reset! render/*world-state nil))
            (.addEventListener img "load"))
       (set! img.src event.target.result))))
 
@@ -43,11 +43,11 @@
       (.readAsDataURL reader (aget files 0)))))
 
 (defn set-sample! [hashes-tiles]
-  (reset! config/sample (mapv #(mapv first %) hashes-tiles))
-  (reset! config/tiles (into {} (apply concat hashes-tiles))))
+  (reset! config/*sample (mapv #(mapv first %) hashes-tiles))
+  (reset! config/*tiles (into {} (apply concat hashes-tiles))))
 
 (defn set-tile-size! [value]
-  (reset! config/tile-size value)
+  (reset! config/*tile-size value)
   (set! (.-value (.getElementById js/document "tile_size")) value)
   (-> @config/image (split-to-tiles value) (set-sample!)))
 
@@ -76,6 +76,6 @@
                         (set-tile-size! tile-size)
                         (cu/draw-grid viewer tile-size)
                         (editor/draw-tile-picker)
-                        (reset! render/world-state nil)))]
+                        (reset! render/*world-state nil)))]
         (.addEventListener img "load" handler)
         (set! img.src sample)))))

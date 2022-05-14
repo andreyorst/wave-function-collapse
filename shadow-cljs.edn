@@ -6,4 +6,6 @@
                 :compiler-options {:optimizations :advanced}
                 :modules {:main {:entries [wfc.core]}}
                 :devtools {:http-root "public"
-                           :http-port 8700}}}}
+                           :http-port 8700
+                           :before-load wfc.core/remove-handlers
+                           :after-load wfc.core/setup-handlers}}}}

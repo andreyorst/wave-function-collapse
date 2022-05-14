@@ -1,9 +1,9 @@
 (ns wfc.config
   (:require [wfc.impl :refer [clamp]]))
 
-(defonce tile-size (atom nil))
-(defonce sample (atom []))
-(defonce tiles (atom {}))
+(defonce *tile-size (atom nil))
+(defonce *sample (atom []))
+(defonce *tiles (atom {}))
 (defonce image
   (atom {:image nil
          :width 0

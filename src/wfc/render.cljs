@@ -4,35 +4,35 @@
    [wfc.config :as config]
    [wfc.canvas-utils :as cu]))
 
-(defonce world-state (atom nil))
+(defonce *world-state (atom nil))
 
-(defn- solve [world ctx size]
-  (let [tiles @config/tiles
-        world (impl/wfc world @config/sample)
+(defn- solve [world canvas size]
+  (let [tiles @config/*tiles
+        world (impl/wfc world @config/*sample)
         fallback (js/Image.)]
-    (reset! world-state world)
+    (reset! *world-state world)
     (loop [world world
            x 0]
       (when-let [[row & rows] world]
         (loop [row row
                y 0]
           (when-let [[cell & cells] row]
-            (cu/draw ctx (get tiles cell fallback) x y size)
+            (cu/draw canvas (get tiles cell fallback) x y size)
             (recur cells (+ y size))))
         (recur rows (+ x size))))))
 
 (defn render [_]
-  (if (number? @config/tile-size)
+  (if (number? @config/*tile-size)
     (when-let [renderer (.getElementById js/document "render_view")]
       (config/clear-error "render_error")
       (let [ctx (.getContext renderer "2d")
             width renderer.width
             height renderer.height
-            size @config/tile-size]
+            size @config/*tile-size]
         (.clearRect ctx 0 0 width height)
-        (solve (or @world-state
+        (solve (or @*world-state
                    (impl/gen-world (/ width size) (/ height size)))
-               ctx size)))
+               renderer size)))
      (config/display-error "render_error" "Please set tile size")))
 
 (defn- shift [world dir]
@@ -45,11 +45,10 @@
                          (into [] (butlast world))))))
 
 (defn move [dir]
-  (if-let [world @world-state]
+  (if-let [world @*world-state]
     (when-let [renderer (.getElementById js/document "render_view")]
-      (let [ctx (.getContext renderer "2d")
-            world (shift world dir)]
-        (solve world ctx @config/tile-size)))
+      (let [world (shift world dir)]
+        (solve world renderer @config/*tile-size)))
     (config/display-error "render_error" "Please generate an image")))
 
 (defn set-world-size [_]
@@ -57,7 +56,7 @@
     (config/clear-error "render_error")
     (let [width (config/get-text-input-value "world_width")
           height (config/get-text-input-value "world_height")
-          tile-size @config/tile-size]
+          tile-size @config/*tile-size]
       (if (and width height)
         (if tile-size
           (let [width (impl/clamp 0 (* width tile-size) config/max-world-pixel-width)
@@ -69,7 +68,7 @@
             (set! (.-value (.getElementById js/document "world_height"))
                   (Math/floor (/ height tile-size)))
             (cu/init-canvas renderer tile-size)
-            (reset! world-state (impl/gen-world (/ width tile-size) (/ height tile-size))))
+            (reset! *world-state (impl/gen-world (/ width tile-size) (/ height tile-size))))
           (config/display-error "render_error" "Please set tile size"))
         (cond (not width)
               (config/display-error "render_error" "Wrong world width")

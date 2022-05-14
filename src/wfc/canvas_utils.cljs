@@ -12,8 +12,9 @@
     (set! canvas.height height)
     canvas))
 
-(defn draw [ctx image x y size]
-  (let [arr (js/Uint8ClampedArray. image.data)
+(defn draw [canvas image x y size]
+  (let [ctx (.getContext canvas "2d")
+        arr (js/Uint8ClampedArray. image.data)
         place (.getImageData ctx x y size size)]
     (.set place.data arr)
     (.putImageData ctx place x y)))
@@ -44,16 +45,17 @@
      (.stroke ctx)
      (.closePath ctx))))
 
-(defn draw-checker-board [ctx width height grid-size]
-  (set! ctx.fillStyle canvas-base)
-  (.fillRect ctx 0 0 width height)
-  (set! ctx.fillStyle "#eee")
-  (doseq [x (range 0 width (* grid-size 2))
-          y (range 0 height (* grid-size 2))]
-    (.fillRect ctx x y grid-size grid-size))
-  (doseq [x (range grid-size width (* grid-size 2))
-          y (range grid-size height (* grid-size 2))]
-    (.fillRect ctx x y grid-size grid-size)))
+(defn draw-checker-board [canvas width height grid-size]
+  (let [ctx (.getContext canvas "2d")]
+    (set! ctx.fillStyle canvas-base)
+    (.fillRect ctx 0 0 width height)
+    (set! ctx.fillStyle "#eee")
+    (doseq [x (range 0 width (* grid-size 2))
+            y (range 0 height (* grid-size 2))]
+      (.fillRect ctx x y grid-size grid-size))
+    (doseq [x (range grid-size width (* grid-size 2))
+            y (range grid-size height (* grid-size 2))]
+      (.fillRect ctx x y grid-size grid-size))))
 
 (defn init-canvas
   ([canvas] (init-canvas canvas 32 ""))
@@ -64,7 +66,7 @@
          height (clamp 0 canvas.height config/max-world-pixel-height)]
      (set! canvas.width width)
      (set! canvas.height height)
-     (draw-checker-board ctx width height grid-size)
+     (draw-checker-board canvas width height grid-size)
      (set! ctx.textBaseline "middle")
      (set! ctx.textAlign "center")
      (set! ctx.font "1.4em Arial")
