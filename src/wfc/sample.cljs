@@ -1,7 +1,8 @@
 (ns wfc.sample
   (:require [wfc.config :as config]
             [wfc.impl :refer [clamp]]
-            [wfc.canvas-utils :as cu]))
+            [wfc.canvas-utils :as cu]
+            [wfc.editor :as editor]))
 
 (defn split-to-tiles [{:keys [width height image]} tile-size]
   (let [canvas (cu/create-canvas width height)
@@ -46,14 +47,14 @@
   (set! (.-value (.getElementById js/document "tile_size")) value)
   (-> @config/image (split-to-tiles value) (set-sample!)))
 
-
 (defn set-tile-size [_]
   (config/clear-error "sample_error")
   (if-let [value (config/get-text-input-value "tile_size")]
     (when-let [sample-viewer (.getElementById js/document "sample_view")]
       (if (:image @config/image)
         (do (set-tile-size! value)
-            (cu/draw-grid sample-viewer value))
+            (cu/draw-grid sample-viewer value)
+            (editor/draw-tile-picker))
         (config/display-error "sample_error" "Please upload an image")))
     (config/display-error "sample_error" "Wrong tile size")))
 
@@ -69,6 +70,7 @@
                         (set! viewer.width width)
                         (set! viewer.height height)
                         (set-tile-size! tile-size)
-                        (cu/draw-grid viewer tile-size)))]
+                        (cu/draw-grid viewer tile-size)
+                        (editor/draw-tile-picker)))]
         (.addEventListener img "load" handler)
         (set! img.src sample)))))

@@ -1,7 +1,6 @@
 (ns wfc.render
   (:require
    [wfc.impl :as impl]
-   [wfc.sample :as sample]
    [wfc.config :as config]
    [wfc.canvas-utils :as cu]))
 
@@ -29,10 +28,10 @@
       (let [ctx (.getContext renderer "2d")
             width renderer.width
             height renderer.height
-            size @config/tile-size
-            world (impl/gen-world (/ width size) (/ height size))]
+            size @config/tile-size]
         (.clearRect ctx 0 0 width height)
-        (solve world ctx size)))
+        (solve (or @world-state
+                   (impl/gen-world (/ width size) (/ height size))) ctx size)))
      (config/display-error "render_error" "Please set tile size")))
 
 (defn- shift [world dir]
@@ -68,7 +67,8 @@
                   (Math/floor (/ width tile-size)))
             (set! (.-value (.getElementById js/document "world_height"))
                   (Math/floor (/ height tile-size)))
-            (config/init-canvas renderer tile-size))
+            (cu/init-canvas renderer tile-size)
+            (reset! world-state (impl/gen-world (/ width tile-size) (/ height tile-size))))
           (config/display-error "render_error" "Please set tile size"))
         (cond (not width)
               (config/display-error "render_error" "Wrong world width")

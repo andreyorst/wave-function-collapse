@@ -28,30 +28,6 @@
         nil
         value))))
 
-(defn init-canvas
-  ([canvas] (init-canvas canvas 32 ""))
-  ([canvas grid-size] (init-canvas canvas grid-size ""))
-  ([canvas grid-size text]
-   (let [ctx (.getContext canvas "2d")
-         width (clamp 0 canvas.width max-world-pixel-width)
-         height (clamp 0 canvas.height max-world-pixel-height)]
-     (set! canvas.width width)
-     (set! canvas.height height)
-     (set! ctx.fillStyle  "#dcdcdc")
-     (set! ctx.textBaseline "middle")
-     (set! ctx.textAlign "center")
-     (set! ctx.font "1.4em Arial")
-     (.fillRect ctx 0 0 width height)
-     (set! ctx.fillStyle  "#eee")
-     (doseq [x (range 0 width (* grid-size 2))
-             y (range 0 height (* grid-size 2))]
-       (.fillRect ctx x y grid-size grid-size))
-     (doseq [x (range grid-size width (* grid-size 2))
-             y (range grid-size height (* grid-size 2))]
-       (.fillRect ctx x y grid-size grid-size))
-     (set! ctx.fillStyle "black")
-     (.fillText ctx text (/ width 2) (/ height 2)))))
-
 (defn display-error [error_class msg]
   (when-let [box (.getElementById js/document error_class)]
     (set! box.innerHTML msg)
