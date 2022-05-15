@@ -6,9 +6,9 @@ This [live demo][2] page runs the code from this repository.
 You can upload your own images, or choose from predefined ones at the bottom of the page.
 There's also a built-in tile-based editor, that can be used to partially draw a picture, and generate the remaining image, or to edit an existing picture, and generate the erased parts:
 
-![demo](/uploads/34fdefd5b0a02109d3fcbe46ec4c73a3/demo.gif)
+![demo][3]
 
-The image later can be scrolled using arrow keys, automatically generating the image in given direction.
+Generated image later can be scrolled using arrow keys, automatically generating the image in given direction.
 
 ## Build
 
@@ -20,3 +20,4 @@ After that open `index.html` in a browser.
 
 [1]: https://andreyorst.gitlab.io/2022-05-10-wave-function-collapse-algorithm-in-clojurescript
 [2]: https://andreyorst.gitlab.io/wave-function-collapse
+[3]: https://user-images.githubusercontent.com/19470159/168482842-47811dc0-4eeb-490b-ba4f-25faacbd3151.gif
