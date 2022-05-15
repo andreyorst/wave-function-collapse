@@ -5,7 +5,7 @@
    [wfc.editor :as editor]
    [wfc.impl :refer [clamp]]))
 
-(defn split-to-tiles [{:keys [width height image]} tile-size]
+(defn split-to-tiles [image width height tile-size]
   (let [canvas (cu/create-canvas width height)
         ctx (.getContext canvas "2d")]
     (.drawImage ctx image 0 0)
@@ -17,21 +17,19 @@
          (into []))))
 
 (defn draw [event]
-  (when-let [viewer (.getElementById js/document "sample_view")]
+  (when-let [viewer (get @config/*dom-elements :sample-view)]
     (let [ctx (.getContext viewer "2d")
           img (js/Image.)]
       (->> #(let [width (clamp 0 img.width config/max-world-pixel-width)
                   height (clamp 0 img.height config/max-world-pixel-height)]
-              (reset! config/image {:image img
-                                    :width width
-                                    :height height})
-              (reset! config/*tile-size nil)
+              (swap! config/*state assoc :image img :image-width width :image-height height)
+              (swap! config/*state dissoc :tile-size)
               (set! viewer.width width)
               (set! viewer.height height)
               (editor/hide-tile-picker)
               (.clearRect ctx 0 0 viewer.width viewer.height)
               (.drawImage ctx img 0 0)
-              (reset! config/*world-state nil))
+              (swap! config/*state dissoc :world-state))
            (.addEventListener img "load"))
       (set! img.src event.target.result))))
 
@@ -42,40 +40,41 @@
       (.readAsDataURL reader (aget files 0)))))
 
 (defn set-sample! [hashes-tiles]
-  (reset! config/*sample (mapv #(mapv first %) hashes-tiles))
-  (reset! config/*tiles (into {} (apply concat hashes-tiles))))
+  (swap! config/*state assoc :sample (mapv #(mapv first %) hashes-tiles))
+  (swap! config/*state assoc :tiles (into {} (apply concat hashes-tiles))))
 
 (defn set-tile-size! [value]
-  (let [value (clamp 16 value 128)]
-    (reset! config/*tile-size value)
-    (set! (.-value (.getElementById js/document "tile_size")) (/ value 2))
-    (-> @config/image (split-to-tiles value) (set-sample!))))
+  (let [value (clamp 16 (* value 2) 128)
+        {:keys [image image-width image-height]} @config/*state]
+    (swap! config/*state assoc :tile-size value)
+    (set! (.-value (get @config/*dom-elements :tile-size-input)) (/ value 2))
+    (-> image (split-to-tiles image-width image-height value) (set-sample!))))
 
 (defn set-tile-size [_]
-  (config/clear-error "sample_error")
-  (if-let [value (config/get-text-input-value "tile_size")]
-    (when-let [sample-viewer (.getElementById js/document "sample_view")]
-      (if (:image @config/image)
+  (config/clear-error :sample-error)
+  (if-let [value (config/get-text-input-value :tile-size-input)]
+    (when-let [sample-viewer (get @config/*dom-elements :sample-view)]
+      (if (:image @config/*state)
         (do (set-tile-size! value)
-            (cu/draw-grid sample-viewer @config/*tile-size)
+            (cu/draw-grid (.getContext sample-viewer "2d") (:tile-size @config/*state))
             (editor/draw-tile-picker))
-        (config/display-error "sample_error" "Please upload an image")))
-    (config/display-error "sample_error" "Wrong tile size")))
+        (config/display-error :sample-error "Please upload an image")))
+    (config/display-error :sample-error "Wrong tile size")))
 
 (defn load-image [sample tile-size]
   (fn [_]
-    (when-let [viewer (.getElementById js/document "sample_view")]
+    (when-let [viewer (get @config/*dom-elements :sample-view)]
       (let [img (js/Image.)
             handler (fn []
                       (let [width (clamp 0 img.width config/max-world-pixel-width)
                             height (clamp 0 img.height config/max-world-pixel-height)]
-                        (config/clear-error "sample_error")
-                        (reset! config/image {:image img :width width :height height})
+                        (config/clear-error :sample-error)
+                        (swap! config/*state assoc :image img :image-width width :image-height height)
                         (set! viewer.width width)
                         (set! viewer.height height)
                         (set-tile-size! tile-size)
-                        (cu/draw-grid viewer tile-size)
+                        (cu/draw-grid (.getContext viewer "2d") (* tile-size 2))
                         (editor/draw-tile-picker)
-                        (reset! config/*world-state nil)))]
+                        (swap! config/*state dissoc :world-state)))]
         (.addEventListener img "load" handler)
         (set! img.src sample)))))

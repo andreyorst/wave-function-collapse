@@ -10,7 +10,7 @@
   (let [event (or event js/window.event)
         key event.key]
     (when (and (valid-key? key)
-               @config/*move?)
+               (:move? @config/*state))
       (.preventDefault event)
       (case key
         "ArrowLeft" (move :left)

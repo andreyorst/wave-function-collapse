@@ -107,7 +107,7 @@ h1, .blog_link {
 }
 
 .size {
-  width: 100px;
+  width: 85px;
   display: block;
   border: 1px solid #ccc;
 }
@@ -242,4 +242,6 @@ footer {
   a:hover {color: #7a5fa4;}
   kbd {background-color: #161b22; color: #dedddc; border: solid 1px rgb(57, 63, 71); border-bottom-color: rgb(37, 43, 51);}
   .sneaky { color: #444; }
+  button { background-color: #161b22; color: #dedddc; }
+  .size { background-color: #161b22; color: #dedddc; }
 }

@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="style.css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Wave Function Collapse</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
   </head>
   <body>
     <main>
@@ -20,38 +21,38 @@
       </p>
       <div class="sample_view">
         <div class="canvas_container">
-          <input type="file" id="sample_input" accept="image/*" hidden></input>
-          <label for="sample_input"><canvas id="sample_view" width="512" height="512" class="image_button"></canvas></label>
+          <input type="file" id="sample-input" accept="image/*" hidden></input>
+          <label for="sample-input"><canvas id="sample-view" width="512" height="512" class="image_button"></canvas></label>
         </div>
-        <span id="sample_error" class="error">no error</span>
+        <span id="sample-error" class="error">no error</span>
         <div class="tile_size">
-          <input type="number" min="8" id="tile_size" placeholder="Tile size (px)" class="size"></input>
-          <button type="button" id="set_tile_size" class="button">Set tile size</button>
+          <input type="text" min="8" id="tile-size-input" placeholder="Tile size (px)" class="size"></input>
+          <button type="button" id="tile-size-button" class="button">Set tile size</button>
         </div>
       </div>
       <div class="tile_picker">
         <div class="canvas_container">
-          <canvas id="tile_picker" width="512" height="0" class="tile_picker"></canvas>
+          <canvas id="tile-picker-view" width="512" height="0" class="tile_picker"></canvas>
         </div>
       </div>
       <div class="render_view">
         <div class="canvas_container">
-          <canvas id="render_view" width="512" height="512"></canvas>
+          <canvas id="render-view" width="512" height="512"></canvas>
         </div>
-        <span class="error" id="render_error">no error</span>
+        <span class="error" id="render-error">no error</span>
         <div class="world_size">
-            <input type="number" id="world_width" placeholder="Width (tiles)" class="size"></input>
+            <input type="text" id="world-width-input" min="4" placeholder="Width (tiles)" class="size"></input>
             <span class="cross">x</span>
-            <input type="number" id="world_height" placeholder="Height (tiles)" class="size"></input>
-            <button type="button" id="set_world_size" class="button">Resize</button>
+            <input type="text" id="world-height-input" min="4" placeholder="Height (tiles)" class="size"></input>
+            <button type="button" id="world-size-button" class="button">Resize</button>
           </div>
         <div class="render_controls">
-          <button type="button" id="clear" class="button">Clear</button>
-          <button type="button" id="render" class="button">Generate</button>
+          <button type="button" id="clear-button" class="button">Clear</button>
+          <button type="button" id="render-button" class="button">Generate</button>
         </div>
       </div>
       <p>
-        To use, upload a sample image by clicking on a canvas, and split the image into tiles of specified size.
+        To use, upload a sample image by clicking on the upper canvas, and split the image into tiles of specified size.
         For ideal results, an image should be constructed from tiles that have exactly the same pixels (no compression).
         After that, press the <kbd>Generate</kbd> button to see the results.
       </p>
