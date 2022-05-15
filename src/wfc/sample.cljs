@@ -76,5 +76,6 @@
                         (cu/draw-grid (.getContext viewer "2d") (* tile-size 2))
                         (editor/draw-tile-picker)
                         (swap! config/*state dissoc :world-state)))]
+        (js/window.scrollTo #js{:top 0 :behavior "smooth"})
         (.addEventListener img "load" handler)
         (set! img.src sample)))))
