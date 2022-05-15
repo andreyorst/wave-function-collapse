@@ -172,7 +172,8 @@
     (.removeEventListener render-view "mouseleave" on-release)
     (swap! config/*state assoc :rendered-image (cu/get-image (.getContext render-view "2d")))
     (.addEventListener render-view "mousemove" overlay-tile)
-    (overlay-tile event)))
+    (when-not (= event.type "mouseleave")
+      (overlay-tile event))))
 
 (defn on-press [event]
   (when-let [render-view (get @config/*dom-elements :render-view)]
