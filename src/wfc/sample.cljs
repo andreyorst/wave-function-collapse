@@ -52,6 +52,7 @@
 
 (defn set-tile-size [_]
   (config/clear-error :sample-error)
+  (config/clear-error :render-error)
   (if-let [value (config/get-text-input-value :tile-size-input)]
     (when-let [sample-viewer (get @config/*dom-elements :sample-view)]
       (if (:image @config/*state)
