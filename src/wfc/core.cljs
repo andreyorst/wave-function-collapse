@@ -17,7 +17,7 @@
 
 (defonce elements-events
   {:sample-view {}
-   :sample-input {"click" sample/upload}
+   :sample-input {"change" sample/upload}
    :render-button {"click" render/render}
    :tile-size-button {"click" sample/set-tile-size}
    :world-size-button {"click" render/set-world-size}
