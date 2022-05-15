@@ -73,7 +73,15 @@
                                    :rendered-image))]
                 (cu/draw ctx image
                          0 0 render-view.width render-view.height)
-                (cu/draw ctx tile x y tile-size)))))))))
+                (cu/draw ctx tile x y tile-size)
+                (set! ctx.fillStyle "#6c8cd655")
+                (set! ctx.strokeStyle "#6c8cd6")
+                (set! ctx.lineWidth 2)
+                (doto ctx
+                  .beginPath
+                  (.fillRect x y tile-size tile-size)
+                  (.rect x y tile-size tile-size)
+                  .stroke)))))))))
 
 (defn- remove-overlay []
   (when-let [render-view (get @config/*dom-elements :render-view)]
@@ -92,14 +100,15 @@
           size (+ (:tile-size @config/*state) MARGIN)]
       (.clearRect ctx 0 0 width height)
       (cu/draw ctx (:tile-picker @*editor) 0 0 width height)
-      (set! ctx.strokeStyle "#dd7777")
+      (set! ctx.fillStyle "#6c8cd655")
+      (set! ctx.strokeStyle "#6c8cd6")
+      (set! ctx.lineWidth 2)
       (doto ctx
         .beginPath
         (.rect x y size size)
+        (.fillRect (dec x) (dec y) (inc size) (inc size))
         .stroke
         .closePath)
-      (set! ctx.fillStyle "#dd777755")
-      (.fillRect ctx (dec x) (dec y) (inc size) (inc size))
       (when-let [render-view (get @config/*dom-elements :render-view)]
         (swap! config/*state assoc :rendered-image (-> render-view (.getContext "2d") cu/get-image))
         (.addEventListener render-view "mousemove" overlay-tile)
@@ -110,7 +119,7 @@
     (when-some [tile-id (:current-tile-id @*editor)]
       (let [ctx (.getContext render-view "2d")
             rect (.getBoundingClientRect render-view)
-            {:keys [tile-size tiles world-state]} @config/*state
+            {:keys [tile-size tiles world-state rendered-image]} @config/*state
             [x y] (case event.type
                     ("mousedown" "mousemove") [event.clientX event.clientY]
                     "touchstart" [(.-clientX (aget event.touches 0))
@@ -126,6 +135,7 @@
           (swap! config/*state assoc-in [:world-state (/ x tile-size) (/ y tile-size)] (or tile-id nil))
           (if tile-id
             (when-let [tile (get tiles tile-id)]
+              (cu/draw ctx rendered-image 0 0 render-view.width render-view.height)
               (cu/draw ctx tile x y tile-size))
             (let [ctx (.getContext render-view "2d")]
               (cu/draw-checker-board ctx x y tile-size tile-size 16)))
@@ -155,13 +165,14 @@
   (when-let [tile-picker (get @config/*dom-elements :tile-picker-view)]
     (set! tile-picker.height "0px")))
 
-(defn on-release [_]
+(defn on-release [event]
   (when-let [render-view (get @config/*dom-elements :render-view)]
     (doseq [type ["mousemove" "touchmove"]]
       (.removeEventListener render-view type set-tile))
     (.removeEventListener render-view "mouseleave" on-release)
     (swap! config/*state assoc :rendered-image (cu/get-image (.getContext render-view "2d")))
-    (.addEventListener render-view "mousemove" overlay-tile)))
+    (.addEventListener render-view "mousemove" overlay-tile)
+    (overlay-tile event)))
 
 (defn on-press [event]
   (when-let [render-view (get @config/*dom-elements :render-view)]
