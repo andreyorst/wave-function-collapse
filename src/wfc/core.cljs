@@ -23,6 +23,8 @@
     (.addEventListener tile-size "click" sample/set-tile-size))
   (when-let [world-size (.getElementById js/document "set_world_size")]
     (.addEventListener world-size "click" render/set-world-size))
+  (when-let [world-size (.getElementById js/document "clear")]
+    (.addEventListener world-size "click" render/clear-render-view))
   (when-let [tile-picker (.getElementById js/document "tile_picker")]
     (.addEventListener tile-picker "click" editor/get-tile))
   (when-let [render-view (.getElementById js/document "render_view")]
@@ -44,6 +46,8 @@
     (.removeEventListener tile-size "click" sample/set-tile-size))
   (when-let [world-size (.getElementById js/document "set_world_size")]
     (.removeEventListener world-size "click" render/set-world-size))
+  (when-let [world-size (.getElementById js/document "clear")]
+    (.removeEventListener world-size "click" render/clear-render-view))
   (when-let [tile-picker (.getElementById js/document "tile_picker")]
     (.removeEventListener tile-picker "click" editor/get-tile))
   (when-let [render-view (.getElementById js/document "render_view")]

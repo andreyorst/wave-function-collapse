@@ -4,6 +4,9 @@
 (defonce *tile-size (atom nil))
 (defonce *sample (atom []))
 (defonce *tiles (atom {}))
+(defonce *world-state (atom nil))
+(defonce *rendered-image (atom nil))
+(defonce *move? (atom false))
 (defonce image
   (atom {:image nil
          :width 0
@@ -26,7 +29,7 @@
     (let [value (js/parseInt tile-size.value)]
       (if (js/isNaN value)
         nil
-        value))))
+        (* value 2)))))
 
 (defn display-error [error_class msg]
   (when-let [box (.getElementById js/document error_class)]

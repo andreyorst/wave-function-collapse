@@ -12,12 +12,19 @@
     (set! canvas.height height)
     canvas))
 
-(defn draw [canvas image x y size]
-  (let [ctx (.getContext canvas "2d")
-        arr (js/Uint8ClampedArray. image.data)
-        place (.getImageData ctx x y size size)]
-    (.set place.data arr)
-    (.putImageData ctx place x y)))
+(defn get-image [canvas]
+  (let [ctx (.getContext canvas "2d")]
+    (.getImageData ctx 0 0 canvas.width canvas.height)))
+
+(defn draw
+  ([canvas image x y size]
+   (draw canvas image x y size size))
+  ([canvas image x y width height]
+   (let [ctx (.getContext canvas "2d")
+         arr (js/Uint8ClampedArray. image.data)
+         place (.getImageData ctx x y width height)]
+     (.set place.data arr)
+     (.putImageData ctx place x y))))
 
 (defn draw-grid
   ([canvas tile-size]

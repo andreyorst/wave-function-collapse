@@ -2,8 +2,7 @@
   (:require
    [wfc.canvas-utils :as cu]
    [wfc.config :as config]
-   [wfc.impl :as impl]
-   [wfc.render :as render]))
+   [wfc.impl :as impl]))
 
 (def ^:const MARGIN 2)                      ; px
 (defonce *tile-grid (atom {}))
@@ -40,11 +39,7 @@
       (set! ctx.lineWidth 2)
       (doto ctx
         .beginPath
-        (.moveTo 1 1)
-        (.lineTo 1 (dec height))
-        (.lineTo (dec width) (dec height))
-        (.lineTo (dec width) 1)
-        (.lineTo 1 1)
+        (.rect 0 0 width height)
         .stroke
         .closePath)
       (reset! *tile-picker (.getImageData ctx 0 0 tile-picker.width tile-picker.height)))))
@@ -58,29 +53,51 @@
         y (* (Math/floor (/ y size)) size)]
     [x y]))
 
+(defn overlay-tile [event]
+  (when-let [render-view (.getElementById js/document "render_view")]
+    (when-some [tile-id @*current-tile-id]
+      (let [rect (.getBoundingClientRect render-view)
+            size @config/*tile-size
+            [x y] (snap-to-grid (- event.clientX rect.left)
+                                (- event.clientY rect.top)
+                                @config/*tile-size)]
+        (when (and (<= 0 x render-view.width)
+                   (<= 0 y render-view.height))
+          (when tile-id
+            (when-let [tile (get @config/*tiles tile-id)]
+              (when-not (some? @config/*rendered-image)
+                (reset! config/*rendered-image (cu/get-image render-view)))
+              (cu/draw render-view
+                       @config/*rendered-image
+                       0 0 render-view.width render-view.height)
+              (cu/draw render-view tile x y size))))))))
+
+(defn remove-overlay []
+  (when-let [render-view (.getElementById js/document "render_view")]
+    (when-not (some? @config/*rendered-image)
+      (reset! config/*rendered-image (cu/get-image render-view)))
+    (cu/draw render-view @config/*rendered-image 0 0 render-view.width render-view.height)))
+
 (defn mark-tile [[x y]]
   (when-let [tile-picker (.getElementById js/document "tile_picker")]
     (let [ctx (.getContext tile-picker "2d")
           width tile-picker.width
           height tile-picker.height
-          size (+ @config/*tile-size MARGIN)
-          arr (js/Uint8ClampedArray. (.-data @*tile-picker))
-          place (.getImageData ctx 0 0 width height)]
+          size (+ @config/*tile-size MARGIN)]
       (.clearRect ctx 0 0 width height)
-      (.set place.data arr)
-      (.putImageData ctx place 0 0)
+      (cu/draw tile-picker @*tile-picker 0 0 width height)
       (set! ctx.strokeStyle "#dd7777")
       (doto ctx
         .beginPath
-        (.moveTo x y)
-        (.lineTo x (+ y size))
-        (.lineTo (+ x size) (+ y size))
-        (.lineTo (+ x size) y)
-        (.lineTo x y)
-        (.stroke)
+        (.rect x y size size)
+        .stroke
         .closePath)
       (set! ctx.fillStyle "#dd777755")
-      (.fillRect ctx (dec x) (dec y) (inc size) (inc size)))))
+      (.fillRect ctx (dec x) (dec y) (inc size) (inc size))
+      (when-let [render-view (.getElementById js/document "render_view")]
+        (reset! config/*rendered-image (cu/get-image render-view))
+        (.addEventListener render-view "mousemove" overlay-tile)
+        (.addEventListener render-view "mouseleave" remove-overlay)))))
 
 (defn get-tile [event]
   (when-let [tile-view (.getElementById js/document "tile_picker")]
@@ -106,10 +123,10 @@
             [x y] (snap-to-grid (- x rect.left) (- y rect.top) @config/*tile-size)]
         (when (and (<= 0 x render-view.width)
                    (<= 0 y render-view.height))
-          (when-not @render/*world-state
-            (reset! render/*world-state
+          (when-not @config/*world-state
+            (reset! config/*world-state
                     (impl/gen-world (/ render-view.width size) (/ render-view.height size))))
-          (swap! render/*world-state assoc-in [(/ x size) (/ y size)] (or tile-id nil))
+          (swap! config/*world-state assoc-in [(/ x size) (/ y size)] (or tile-id nil))
           (if tile-id
             (when-let [tile (get @config/*tiles tile-id)]
               (cu/draw render-view tile x y size))
@@ -118,13 +135,16 @@
                     (if (or (and (odd? (/ x size)) (even? (/ y size)))
                             (and (even? (/ x size)) (odd? (/ y size)))) cu/canvas-base
                         cu/canvas-check))
-              (.fillRect ctx x y size size))))))))
+              (.fillRect ctx x y size size)))
+          (reset! config/*rendered-image (cu/get-image render-view)))))))
 
 (defn on-release [_]
   (when-let [render-view (.getElementById js/document "render_view")]
     (doseq [type ["mousemove" "touchmove"]]
       (.removeEventListener render-view type set-tile))
-    (.removeEventListener render-view "mouseleave" on-release)))
+    (.removeEventListener render-view "mouseleave" on-release)
+    (reset! config/*rendered-image (cu/get-image render-view))
+    (.addEventListener render-view "mousemove" overlay-tile)))
 
 (defn on-press [event]
   (when-let [render-view (.getElementById js/document "render_view")]
@@ -133,4 +153,5 @@
       (.preventDefault event))
     (doseq [type ["mousemove" "touchmove"]]
       (.addEventListener render-view type set-tile))
+    (.removeEventListener render-view "mousemove" overlay-tile)
     (.addEventListener render-view "mouseleave" on-release)))

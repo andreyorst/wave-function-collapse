@@ -25,7 +25,7 @@
         </div>
         <span id="sample_error" class="error">no error</span>
         <div class="tile_size">
-          <input type="number" id="tile_size" placeholder="Tile size (px)" class="size"></input>
+          <input type="number" min="8" id="tile_size" placeholder="Tile size (px)" class="size"></input>
           <button type="button" id="set_tile_size" class="button">Set tile size</button>
         </div>
       </div>
@@ -40,10 +40,13 @@
         </div>
         <span class="error" id="render_error">no error</span>
         <div class="world_size">
-          <input type="number" id="world_width" placeholder="Width (tiles)" class="size"></input>
-          <span class="cross">x</span>
-          <input type="number" id="world_height" placeholder="Height (tiles)" class="size"></input>
-          <button type="button" id="set_world_size" class="button">Resize</button>
+            <input type="number" id="world_width" placeholder="Width (tiles)" class="size"></input>
+            <span class="cross">x</span>
+            <input type="number" id="world_height" placeholder="Height (tiles)" class="size"></input>
+            <button type="button" id="set_world_size" class="button">Resize</button>
+          </div>
+        <div class="render_controls">
+          <button type="button" id="clear" class="button">Clear</button>
           <button type="button" id="render" class="button">Generate</button>
         </div>
       </div>

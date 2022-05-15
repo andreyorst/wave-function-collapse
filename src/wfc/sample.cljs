@@ -3,15 +3,14 @@
    [wfc.canvas-utils :as cu]
    [wfc.config :as config]
    [wfc.editor :as editor]
-   [wfc.impl :refer [clamp]]
-   [wfc.render :as render]))
+   [wfc.impl :refer [clamp]]))
 
 (defn split-to-tiles [{:keys [width height image]} tile-size]
   (let [canvas (cu/create-canvas width height)
         ctx (.getContext canvas "2d")]
     (.drawImage ctx image 0 0)
-    (->> (for [x (range 0 height tile-size)]
-           (->> (for [y (range 0 width tile-size)
+    (->> (for [x (range 0 width tile-size)]
+           (->> (for [y (range 0 height tile-size)
                       :let [img (.getImageData ctx x y tile-size tile-size)]]
                   [(hash (vec img.data)) img])
                 (into [])))
@@ -32,7 +31,7 @@
               (editor/hide-tile-picker)
               (.clearRect ctx 0 0 viewer.width viewer.height)
               (.drawImage ctx img 0 0)
-              (reset! render/*world-state nil))
+              (reset! config/*world-state nil))
            (.addEventListener img "load"))
       (set! img.src event.target.result))))
 
@@ -47,9 +46,10 @@
   (reset! config/*tiles (into {} (apply concat hashes-tiles))))
 
 (defn set-tile-size! [value]
-  (reset! config/*tile-size value)
-  (set! (.-value (.getElementById js/document "tile_size")) value)
-  (-> @config/image (split-to-tiles value) (set-sample!)))
+  (let [value (clamp 16 value 128)]
+    (reset! config/*tile-size value)
+    (set! (.-value (.getElementById js/document "tile_size")) (/ value 2))
+    (-> @config/image (split-to-tiles value) (set-sample!))))
 
 (defn set-tile-size [_]
   (config/clear-error "sample_error")
@@ -57,7 +57,7 @@
     (when-let [sample-viewer (.getElementById js/document "sample_view")]
       (if (:image @config/image)
         (do (set-tile-size! value)
-            (cu/draw-grid sample-viewer value)
+            (cu/draw-grid sample-viewer @config/*tile-size)
             (editor/draw-tile-picker))
         (config/display-error "sample_error" "Please upload an image")))
     (config/display-error "sample_error" "Wrong tile size")))
@@ -76,6 +76,6 @@
                         (set-tile-size! tile-size)
                         (cu/draw-grid viewer tile-size)
                         (editor/draw-tile-picker)
-                        (reset! render/*world-state nil)))]
+                        (reset! config/*world-state nil)))]
         (.addEventListener img "load" handler)
         (set! img.src sample)))))

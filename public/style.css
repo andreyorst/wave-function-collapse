@@ -89,7 +89,7 @@ a:hover {
 }
 
 p {
-  margin: 1.25em 0;
+  margin: 20px 0;
 }
 
 em, i {
@@ -101,16 +101,21 @@ strong, b {
 }
 
 h1, .blog_link {
-  font-size: 1.4em;
+  font-size: 22px;
   font-weight: bold;
   margin: 20px 20px 10px 0;
-  line-height: 1em;
 }
 
 .size {
-  width: 8em;
+  width: 100px;
   display: block;
   border: 1px solid #ccc;
+}
+
+.render_controls {
+  display: flex;
+  padding-top: 10px;
+  justify-content: center;
 }
 
 .tile_size,.world_size {
@@ -120,11 +125,7 @@ h1, .blog_link {
 }
 
 .render_view, .sample_view {
-  padding-bottom: 1em;
-}
-
-.tile_size {
-  padding-bottom: 1em;
+  padding-bottom: 20px;
 }
 
 .info {
@@ -203,7 +204,6 @@ kbd {
 }
 
 footer {
-  margin-top: 1em;
   max-width: 640px;
   margin: 20px auto;
 }
