@@ -25,6 +25,7 @@
    :tile-picker-view {"click" editor/get-tile}
    :render-view {["mousedown" "touchstart"] editor/on-press
                  ["mouseup" "touchend"] editor/on-release}
+   :animate-button {"click" render/toggle-animate}
    :tile-size-input {}
    :world-width-input {}
    :world-height-input {}
@@ -65,4 +66,6 @@
   (when-let [sample-view (get @config/*dom-elements :sample-view)]
     (cu/init-canvas sample-view "click to upload sample"))
   (when-let [render-view (get @config/*dom-elements :render-view)]
-    (cu/init-canvas render-view)))
+    (cu/init-canvas render-view))
+  (when-let [animate-button (get @config/*dom-elements :animate-button)]
+    (set! animate-button.checked true)))

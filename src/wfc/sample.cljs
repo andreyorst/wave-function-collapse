@@ -76,7 +76,9 @@
                         (set-tile-size! tile-size)
                         (cu/draw-grid (.getContext viewer "2d") (* tile-size 2))
                         (editor/draw-tile-picker)
-                        (swap! config/*state dissoc :world-state)))]
-        (js/window.scrollTo #js{:top 0 :behavior "smooth"})
+                        (swap! config/*state dissoc :world-state)))
+            tile-picker-rect (->> @config/*dom-elements :tile-picker-view .getBoundingClientRect)
+            y (+ tile-picker-rect.top js/window.scrollY -10)]
+        (js/window.scrollTo #js{:top y :behavior "smooth"})
         (.addEventListener img "load" handler)
         (set! img.src sample)))))

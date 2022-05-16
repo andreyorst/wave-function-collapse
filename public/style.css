@@ -116,6 +116,13 @@ h1, .blog_link {
   display: flex;
   padding-top: 10px;
   justify-content: center;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.animate_button_container {
+  font-size: 14px;
+  margin-left: 10px;
 }
 
 .tile_size,.world_size {

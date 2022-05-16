@@ -1,7 +1,11 @@
 (ns wfc.canvas-utils
   (:require
-   [wfc.config :as config]
-   [wfc.impl :refer [clamp]]))
+   [wfc.config :as config]))
+
+(defn clamp [lo x hi]
+  (cond (< x lo) lo
+        (> x hi) hi
+        :else x))
 
 (defn create-canvas [width height]
   (let [canvas (.createElement js/document "canvas")]

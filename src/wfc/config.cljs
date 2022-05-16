@@ -12,7 +12,8 @@
                        :move? false
                        :image nil
                        :image-width 0
-                       :image-height 0}))
+                       :image-height 0
+                       :animate? true}))
 
 (defonce dark-mode?
   (.-matches (js/window.matchMedia "(prefers-color-scheme: dark)")))
