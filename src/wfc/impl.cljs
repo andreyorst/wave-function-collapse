@@ -1,4 +1,5 @@
 (ns wfc.impl
+  "Implementation of the wave function collapse alrorithm."
   (:require
    [clojure.set :as set]
    [wfc.config :as config]
@@ -33,7 +34,9 @@
 (defn- sample-weights [sample]
   (frequencies (apply concat sample)))
 
-(defn- cell-entropy [cell weights]
+(defn- cell-entropy
+  "Shannon entropy."
+  [cell weights]
   (loop [variants cell
          weight-sum 0
          log-weight-sum 0]
@@ -47,7 +50,13 @@
 (defn- done? [world]
   (not (some set? (flatten world))))
 
-(defn- lowest-entropy-cell [world weights]
+(defn- lowest-entropy-cell
+  "Search for the cell with the lowest entropy.
+  Each row is processed and cells are put into the sorted map, sorting
+  by the entropy. Then the first value from each row is taken and
+  sorted by the entropy again. The lowest entropy cell is then
+  selected."
+  [world weights]
   (loop [x 0
          [row & rows] world
          entropies (sorted-map)]
@@ -86,6 +95,10 @@
     (assoc-in world [x y] val)))
 
 (defn- collapse-neighbors*
+  "Part of the recursive collapsing algorithm.
+  Collapses four nearest neighbors and returns the world state
+  alongside with these neighbors, so that the caller could process
+  these points with this function in a trampoline-like way."
   [world recipe pos]
   (let [cell (get-in world pos)
         neighbors (get-neighbors world pos)
@@ -107,7 +120,12 @@
             (recur neighbors world)))
         [world neighboring-cells]))))
 
-(defn- collapse-neighbors [world recipe pos]
+(defn- collapse-neighbors
+  "Recursive collapsing neighbors using trampoline-like technique.
+  Instead of doing work recursively calls `collapse-neighbors*` and
+  collects a stack of values to be processed next, after the called
+  function finishes for current position."
+  [world recipe pos]
   (loop [neighbors [pos]
          visited #{}
          world world]
@@ -130,7 +148,10 @@
 (defn- pre-filled? [world]
   (some some? (flatten world)))
 
-(defn- init-world [world sample recipe]
+(defn- init-world
+  "Initializes the world with a given sample, and afterwards collapses
+  cells if world was pre-filled with information."
+  [world sample recipe]
   (let [filled? (pre-filled? world)
         width (count (first world))
         height (count world)
@@ -144,39 +165,42 @@
                 [x y]))
       world)))
 
-(defn clamp [lo x hi]
-  (cond (< x lo) lo
-        (> x hi) hi
-        :else x))
-
-(defn gen-world [max-x max-y]
+(defn gen-world
+  "Creates a new empty world of given size."
+  [max-x max-y]
   (mapv vec (for [_ (range max-x)]
               (for [_ (range max-y)] nil))))
 
-(defn wfc [world sample callback animate?]
+(defn wfc
+  "Main algorithm loop.
+  The loop itself is done in a callback style by calling
+  `.requestAnimationFrame` method of a `window`.  The world state is
+  captured in a mutable closure."
+  [world sample callback animate?]
   (let [recipe (build-recipe sample)
         weights (sample-weights sample)
-        world (init-world world sample recipe)
-        p (volatile! (if (pre-filled? (:world-state @config/*state))
-                       (lowest-entropy-cell world weights)
-                       [(rand-int (count (first world)))
-                        (rand-int (count world))]))
-        w (volatile! world)]
-    ((fn compute []
-       (let [world @w
-             pos @p]
-         (if-not (done? world)
-           (let [cell (get-in world pos)
-                 world (-> world
-                           (collapse pos (weighted-random cell weights))
-                           (collapse-neighbors recipe pos))]
-             (when animate?
-               (callback world))
-             (vreset! w world)
-             (vreset! p (lowest-entropy-cell world weights))
-             (.requestAnimationFrame js/window compute))
-           (do (callback world)
-               (swap! config/*state assoc
-                      :world-state world
-                      :rendered-image (cu/get-image (.getContext (:render-view @config/*dom-elements) "2d"))
-                      :move? true))))))))
+        *world (volatile! (init-world world sample recipe))
+        *pos (volatile! (if (pre-filled? world)
+                          (lowest-entropy-cell @*world weights)
+                          [(rand-int (count (first world)))
+                           (rand-int (count world))]))
+        compute
+        (fn compute []
+          (let [world @*world
+                pos @*pos]
+            (if-not (done? world)
+              (let [cell (get-in world pos)
+                    world (-> world
+                              (collapse pos (weighted-random cell weights))
+                              (collapse-neighbors recipe pos))]
+                (when animate?
+                  (callback world))
+                (vreset! *world world)
+                (vreset! *pos (lowest-entropy-cell world weights))
+                (.requestAnimationFrame js/window compute))
+              (do (callback world)
+                  (swap! config/*state assoc
+                         :world-state world
+                         :rendered-image (cu/get-image (.getContext (:render-view @config/*dom-elements) "2d"))
+                         :move? true)))))]
+    (compute)))

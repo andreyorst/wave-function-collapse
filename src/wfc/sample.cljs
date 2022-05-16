@@ -1,11 +1,12 @@
 (ns wfc.sample
+  "Everything related to the sample image.
+  Handles uploading, setting tile-size, and splitting into tiles."
   (:require
    [wfc.canvas-utils :as cu]
    [wfc.config :as config]
-   [wfc.editor :as editor]
-   [wfc.impl :refer [clamp]]))
+   [wfc.editor :as editor]))
 
-(defn split-to-tiles [image width height tile-size]
+(defn- split-to-tiles [image width height tile-size]
   (let [canvas (cu/create-canvas width height)
         ctx (.getContext canvas "2d")]
     (.drawImage ctx image 0 0)
@@ -16,12 +17,12 @@
                 (into [])))
          (into []))))
 
-(defn draw [event]
+(defn- draw [event]
   (when-let [viewer (get @config/*dom-elements :sample-view)]
     (let [ctx (.getContext viewer "2d")
           img (js/Image.)]
-      (->> #(let [width (clamp 0 img.width config/max-world-pixel-width)
-                  height (clamp 0 img.height config/max-world-pixel-height)]
+      (->> #(let [width (cu/clamp 0 img.width config/max-world-pixel-width)
+                  height (cu/clamp 0 img.height config/max-world-pixel-height)]
               (swap! config/*state assoc :image img :image-width width :image-height height)
               (swap! config/*state dissoc :tile-size)
               (set! viewer.width width)
@@ -33,42 +34,28 @@
            (.addEventListener img "load"))
       (set! img.src event.target.result))))
 
-(defn upload [event]
-  (when-let [files event.target.files]
-    (let [reader (js/FileReader.)]
-      (.addEventListener reader "load" draw)
-      (.readAsDataURL reader (aget files 0)))))
+(defn- set-sample! [hashes-tiles]
+  (swap! config/*state assoc
+         :sample (mapv #(mapv first %) hashes-tiles)
+         :tiles (into {} (apply concat hashes-tiles))))
 
-(defn set-sample! [hashes-tiles]
-  (swap! config/*state assoc :sample (mapv #(mapv first %) hashes-tiles))
-  (swap! config/*state assoc :tiles (into {} (apply concat hashes-tiles))))
-
-(defn set-tile-size! [value]
-  (let [value (clamp 16 (* value 2) 128)
+(defn- set-tile-size! [value]
+  (let [value (cu/clamp 16 (* value 2) 128)
         {:keys [image image-width image-height]} @config/*state]
     (swap! config/*state assoc :tile-size value)
     (set! (.-value (get @config/*dom-elements :tile-size-input)) (/ value 2))
     (-> image (split-to-tiles image-width image-height value) (set-sample!))))
 
-(defn set-tile-size [_]
-  (config/clear-error :sample-error)
-  (config/clear-error :render-error)
-  (if-let [value (config/get-text-input-value :tile-size-input)]
-    (when-let [sample-viewer (get @config/*dom-elements :sample-view)]
-      (if (:image @config/*state)
-        (do (set-tile-size! value)
-            (cu/draw-grid (.getContext sample-viewer "2d") (:tile-size @config/*state))
-            (editor/draw-tile-picker))
-        (config/display-error :sample-error "Please upload an image")))
-    (config/display-error :sample-error "Wrong tile size")))
-
-(defn load-image [sample tile-size]
+(defn load-image
+  "Returns an anonymous function that is registered as event listener
+  for loading example images."
+  [sample tile-size]
   (fn [_]
     (when-let [viewer (get @config/*dom-elements :sample-view)]
       (let [img (js/Image.)
             handler (fn []
-                      (let [width (clamp 0 img.width config/max-world-pixel-width)
-                            height (clamp 0 img.height config/max-world-pixel-height)]
+                      (let [width (cu/clamp 0 img.width config/max-world-pixel-width)
+                            height (cu/clamp 0 img.height config/max-world-pixel-height)]
                         (config/clear-error :sample-error)
                         (swap! config/*state assoc :image img :image-width width :image-height height)
                         (set! viewer.width width)
@@ -82,3 +69,27 @@
         (js/window.scrollTo #js{:top y :behavior "smooth"})
         (.addEventListener img "load" handler)
         (set! img.src sample)))))
+
+(defn upload
+  "Upload handler for loading a new sample from the user."
+  [event]
+  (when-let [files event.target.files]
+    (let [reader (js/FileReader.)]
+      (.addEventListener reader "load" draw)
+      (.readAsDataURL reader (aget files 0)))))
+
+(defn set-tile-size
+  "Setter for the tile size.
+  Requires an image to be uploaded.
+  Additionally draws a grid with a width of the specified tile size."
+  [_]
+  (config/clear-error :sample-error)
+  (config/clear-error :render-error)
+  (if-let [value (config/get-text-input-value :tile-size-input)]
+    (when-let [sample-viewer (get @config/*dom-elements :sample-view)]
+      (if (:image @config/*state)
+        (do (set-tile-size! value)
+            (cu/draw-grid (.getContext sample-viewer "2d") (:tile-size @config/*state))
+            (editor/draw-tile-picker))
+        (config/display-error :sample-error "Please upload an image")))
+    (config/display-error :sample-error "Wrong tile size")))

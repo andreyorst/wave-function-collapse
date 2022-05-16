@@ -1,4 +1,5 @@
 (ns wfc.input
+  "Keyboard input handler."
   (:require
    [wfc.render :refer [move]]
    [wfc.config :as config]))

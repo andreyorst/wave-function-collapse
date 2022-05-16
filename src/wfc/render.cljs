@@ -1,10 +1,11 @@
 (ns wfc.render
+  "Handles rendering, setting world size, and animation."
   (:require
    [wfc.impl :as impl]
    [wfc.config :as config]
    [wfc.canvas-utils :as cu]))
 
-(defn draw-world [ctx size tiles fallback world]
+(defn- draw-world [ctx size tiles fallback world]
   (loop [world world
          x 0]
     (when-let [[row & rows] world]
@@ -15,27 +16,16 @@
           (recur cells (+ y size))))
       (recur rows (+ x size)))))
 
-(defn- solve [world ctx size animate?]
-  (let [{:keys [tiles sample tile-size]} @config/*state
-        fallback-ctx (.getContext (cu/create-canvas tile-size tile-size) "2d")
-        _ (cu/draw-checker-board fallback-ctx tile-size tile-size 16)
-        fallback (cu/get-image fallback-ctx)]
-    (impl/wfc world sample (partial draw-world ctx size tiles fallback) animate?)))
+(defn- create-fallback-tile [tile-size]
+  (let [canvas (cu/create-canvas tile-size tile-size)
+        ctx (.getContext canvas "2d")]
+    (cu/draw-checkerboard ctx tile-size tile-size 16)
+    (cu/get-image ctx)))
 
-(defn render [_]
-  (let [{:keys [tile-size world-state]} @config/*state]
-    (if (number? tile-size)
-      (when-let [renderer (get @config/*dom-elements :render-view)]
-        (config/clear-error :render-error)
-        (let [ctx (.getContext renderer "2d")
-              width renderer.width
-              height renderer.height]
-          (cu/draw-checker-board ctx width height 16)
-          (solve (or world-state
-                     (impl/gen-world (/ width tile-size) (/ height tile-size)))
-                 ctx tile-size
-                 (:animate? @config/*state))))
-      (config/display-error :render-error "Please set tile size"))))
+(defn- solve [world ctx size animate?]
+  (let [{:keys [tiles sample]} @config/*state
+        fallback (create-fallback-tile size)]
+    (impl/wfc world sample (partial draw-world ctx size tiles fallback) animate?)))
 
 (defn- shift [world dir]
   (case dir
@@ -46,7 +36,33 @@
     :left (into [] (cons (into [] (repeat (count (first world)) nil))
                          (into [] (butlast world))))))
 
-(defn move [dir]
+(defn toggle-animate
+  "Reads the value of the `Animate` check box."
+  [event]
+  (swap! config/*state assoc :animate? event.target.checked))
+
+(defn render
+  "Render an image based on current tile set and rules.
+  Requires `tile-size` to be set.
+  The main work is done in `solve`."
+  [_]
+  (let [{:keys [tile-size world-state]} @config/*state]
+    (if (number? tile-size)
+      (when-let [renderer (get @config/*dom-elements :render-view)]
+        (config/clear-error :render-error)
+        (let [ctx (.getContext renderer "2d")
+              width renderer.width
+              height renderer.height]
+          (cu/draw-checkerboard ctx width height 16)
+          (solve (or world-state
+                     (impl/gen-world (/ width tile-size) (/ height tile-size)))
+                 ctx tile-size
+                 (:animate? @config/*state))))
+      (config/display-error :render-error "Please set tile size"))))
+
+(defn move
+  "Shifts the world in a given direction, and recomputes the image."
+  [dir]
   (if-let [{:keys [world-state tile-size]} @config/*state]
     (when-let [renderer (get @config/*dom-elements :render-view)]
       (let [world (shift world-state dir)
@@ -55,7 +71,10 @@
         (solve world ctx tile-size false)))
     (config/display-error :render-error "Please generate an image")))
 
-(defn clear-render-view []
+(defn clear-render-view
+  "Clears the output image, and resets the world state, so that the
+  Generate button would create a new one."
+  []
   (when-let [renderer (get @config/*dom-elements :render-view)]
     (if-let [tile-size (:tile-size @config/*state)]
       (do (config/clear-error :render-error)
@@ -67,7 +86,10 @@
           (swap! config/*state assoc :move? false))
       (config/display-error :render-error "Please set tile size"))))
 
-(defn set-world-size [_]
+(defn set-world-size
+  "Changes the size of the canvas and recreates a new empty world state
+  for a given width and height, obtained from the respecting inputs."
+  [_]
   (when-let [renderer (get @config/*dom-elements :render-view)]
     (config/clear-error :render-error)
     (let [width (config/get-text-input-value :world-width-input)
@@ -75,8 +97,8 @@
           {:keys [tile-size]} @config/*state]
       (if (and width height)
         (if tile-size
-          (let [width (impl/clamp (* tile-size 4) (* width tile-size) config/max-world-pixel-width)
-                height (impl/clamp (* tile-size 4) (* height tile-size) config/max-world-pixel-height)]
+          (let [width (cu/clamp (* tile-size 4) (* width tile-size) config/max-world-pixel-width)
+                height (cu/clamp (* tile-size 4) (* height tile-size) config/max-world-pixel-height)]
             (set! renderer.width width)
             (set! renderer.height height)
             (set! (.-value (get @config/*dom-elements :world-width-input))
@@ -89,6 +111,3 @@
               (config/display-error :render-error "Wrong world width")
               (not height)
               (config/display-error :render-error "Wrong world height"))))))
-
-(defn toggle-animate [event]
-  (swap! config/*state assoc :animate? event.target.checked))

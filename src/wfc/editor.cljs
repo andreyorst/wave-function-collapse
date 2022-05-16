@@ -1,4 +1,5 @@
 (ns wfc.editor
+  "Tile editor for the renderer."
   (:require
    [wfc.canvas-utils :as cu]
    [wfc.config :as config]
@@ -11,7 +12,9 @@
          :current-tile-id nil
          :tile-picker nil}))
 
-(defn- draw-tile-grid [ctx tile-size tiles]
+(defn- draw-tile-grid
+  "Draws the grid of tiles for a tile picker."
+  [ctx tile-size tiles]
   (let [grid-color (if config/dark-mode? "#1e1e1e" "#fbfcfd")
         size (+ tile-size MARGIN)
         max-tiles-in-row (Math/floor (/ config/max-world-pixel-width size))
@@ -23,7 +26,7 @@
         max-width (* max-tiles-in-row size)]
     (set! ctx.canvas.height height)
     (set! ctx.canvas.width width)
-    (cu/draw-checker-board ctx width height 8)
+    (cu/draw-checkerboard ctx width height 8)
     (set! ctx.fillStyle grid-color)
     (loop [tiles (->> tiles (sort-by first))
            x 0 y 0
@@ -54,7 +57,10 @@
         y (* (Math/floor (/ y size)) size)]
     [x y]))
 
-(defn- overlay-tile [event]
+(defn- overlay-tile
+  "Overlays currently selected tile on the renderer, and keeps track of
+  not overriding the image."
+  [event]
   (when-let [render-view (get @config/*dom-elements :render-view)]
     (when-some [tile-id (:current-tile-id @*editor)]
       (let [ctx (.getContext render-view "2d")
@@ -83,7 +89,9 @@
                   (.rect x y tile-size tile-size)
                   .stroke)))))))))
 
-(defn- remove-overlay []
+(defn- remove-overlay
+  "Does the opposite of `overlay-tile`."
+  []
   (when-let [render-view (get @config/*dom-elements :render-view)]
     (let [ctx (.getContext render-view "2d")
           image (or (:rendered-image @config/*state)
@@ -92,7 +100,10 @@
                          :rendered-image))]
       (cu/draw ctx image 0 0 render-view.width render-view.height))))
 
-(defn- mark-tile [[x y]]
+(defn- mark-tile
+  "Marks the tile on the tile-picker as selected, and sets the tile id
+  in editor's state."
+  [[x y]]
   (when-let [tile-picker (get @config/*dom-elements :tile-picker-view)]
     (let [ctx (.getContext tile-picker "2d")
           width tile-picker.width
@@ -114,7 +125,9 @@
         (.addEventListener render-view "mousemove" overlay-tile)
         (.addEventListener render-view "mouseleave" remove-overlay)))))
 
-(defn- set-tile [event]
+(defn- set-tile
+  "Draws the tile on the renderer and adds the tile to the world state."
+  [event]
   (when-let [render-view (get @config/*dom-elements :render-view)]
     (when-some [tile-id (:current-tile-id @*editor)]
       (let [ctx (.getContext render-view "2d")
@@ -138,10 +151,13 @@
               (cu/draw ctx rendered-image 0 0 render-view.width render-view.height)
               (cu/draw ctx tile x y tile-size))
             (let [ctx (.getContext render-view "2d")]
-              (cu/draw-checker-board ctx x y tile-size tile-size 16)))
+              (cu/draw-checkerboard ctx x y tile-size tile-size 16)))
           (swap! config/*state assoc :rendered-image (cu/get-image ctx)))))))
 
-(defn get-tile [event]
+(defn get-tile
+  "Extracts the coordinates from the tile picker and finds the tile id
+  in editor's state."
+  [event]
   (when-let [tile-picker (get @config/*dom-elements :tile-picker-view)]
     (let [rect (.getBoundingClientRect tile-picker)
           x (- event.clientX rect.left)
@@ -165,7 +181,10 @@
   (when-let [tile-picker (get @config/*dom-elements :tile-picker-view)]
     (set! tile-picker.height "0px")))
 
-(defn on-release [event]
+(defn on-release
+  "Handles mouse and touch release events, overlaying a tile from the
+  tile picker, and updating current state of the editor."
+  [event]
   (when-let [render-view (get @config/*dom-elements :render-view)]
     (doseq [type ["mousemove" "touchmove"]]
       (.removeEventListener render-view type set-tile))
@@ -175,7 +194,11 @@
     (when-not (= event.type "mouseleave")
       (overlay-tile event))))
 
-(defn on-press [event]
+(defn on-press
+  "Handles initial mouse and touch down events, setting currently
+  selected tile, and all required events for further processing of the
+  movement."
+  [event]
   (when-let [render-view (get @config/*dom-elements :render-view)]
     (set-tile event)
     (when (= event.type "touchstart")

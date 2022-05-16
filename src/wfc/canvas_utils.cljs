@@ -1,4 +1,5 @@
 (ns wfc.canvas-utils
+  "Utility functions for working with a canvas."
   (:require
    [wfc.config :as config]))
 
@@ -7,16 +8,21 @@
         (> x hi) hi
         :else x))
 
-(defn create-canvas [width height]
+(defn create-canvas
+  "Creates a canvas object for drawing without displaying on the page."
+  [width height]
   (let [canvas (.createElement js/document "canvas")]
     (set! canvas.width width)
     (set! canvas.height height)
     canvas))
 
-(defn get-image [ctx]
+(defn get-image
+  "Get the current image from the given context as `ImageData`."
+  [ctx]
   (.getImageData ctx 0 0 ctx.canvas.width ctx.canvas.height))
 
 (defn draw
+  "Draw a given image on a given context."
   ([ctx image x y size]
    (draw ctx image x y size size))
   ([ctx image x y width height]
@@ -26,6 +32,8 @@
      (.putImageData ctx place x y))))
 
 (defn draw-grid
+  "Draws a grid of lines on a given context.
+  The grid can be either `:dash` or `:solid`."
   ([ctx tile-size]
    (draw-grid ctx tile-size :dash "#000" true))
   ([ctx tile-size style redraw?]
@@ -50,9 +58,10 @@
      (.stroke ctx)
      (.closePath ctx))))
 
-(defn draw-checker-board
+(defn draw-checkerboard
+  "Draws the checkerboard on a given context."
   ([ctx width height grid-size]
-   (draw-checker-board ctx 0 0 width height grid-size))
+   (draw-checkerboard ctx 0 0 width height grid-size))
   ([ctx x y width height grid-size]
    (let [[base check] (if config/dark-mode?
                         ["#2e2e2e" "#333"]
@@ -68,6 +77,8 @@
        (.fillRect ctx x y grid-size grid-size)))))
 
 (defn init-canvas
+  "Initializes a canvas, drawing a checkerboard on it, and optionally
+  displaying a given text."
   ([canvas] (init-canvas canvas ""))
   ([canvas text]
    (let [ctx (.getContext canvas "2d")
@@ -75,7 +86,7 @@
          height (clamp 0 canvas.height config/max-world-pixel-height)]
      (set! canvas.width width)
      (set! canvas.height height)
-     (draw-checker-board ctx width height 16)
+     (draw-checkerboard ctx width height 16)
      (set! ctx.textBaseline "middle")
      (set! ctx.textAlign "center")
      (set! ctx.font "1.4em Arial")
