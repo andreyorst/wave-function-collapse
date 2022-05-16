@@ -37,7 +37,7 @@
 (defn- cell-entropy
   "Shannon entropy."
   [cell weights]
-  (loop [variants cell
+  (loop [variants (if (coll? cell) cell [cell])
          weight-sum 0
          log-weight-sum 0]
     (if-let [[variant & variants] variants]
@@ -45,7 +45,7 @@
         (recur variants
                (+ weight-sum weight)
                (+ log-weight-sum (* weight (Math/log (double weight))))))
-      (Math/log (- weight-sum (/ log-weight-sum weight-sum))))))
+      (- (Math/log weight-sum) (/ log-weight-sum weight-sum)))))
 
 (defn- done? [world]
   (not (some set? (flatten world))))
@@ -125,19 +125,19 @@
   Instead of doing work recursively calls `collapse-neighbors*` and
   collects a stack of values to be processed next, after the called
   function finishes for current position."
-  [world recipe pos]
-  (loop [neighbors [pos]
-         visited #{}
+  [world recipe pos weights]
+  (loop [neighbors #{pos}
          world world]
     (if (seq neighbors)
-      (let [[pos & neighbors] neighbors
-            [world' next] (if-not (visited pos)
-                            (collapse-neighbors* world recipe pos)
-                            [world []])]
+      (let [pos (->> neighbors
+                     (map (fn [pos] [(cell-entropy (get-in world pos) weights) pos]))
+                     (sort-by first)
+                     first
+                     second)
+            [world' next] (collapse-neighbors* world recipe pos)]
         (recur (if (= world world')
-                 neighbors
-                 (concat neighbors next))
-               (conj visited pos)
+                 (disj neighbors pos)
+                 (disj (into neighbors next) pos))
                world'))
       world)))
 
@@ -152,18 +152,15 @@
   "Initializes the world with a given sample, and afterwards collapses
   cells if world was pre-filled with information."
   [world sample recipe]
-  (let [filled? (pre-filled? world)
-        width (count (first world))
-        height (count world)
-        world (populate-world world sample)]
-    (if filled?
+  (let [width (count (first world))
+        height (count world)]
+    (if (pre-filled? world)
       (reduce (fn [world pos]
-                (collapse-neighbors world recipe pos))
-              world
-              (for [x (range width)
-                    y (range height)]
-                [x y]))
-      world)))
+                (first (collapse-neighbors* world recipe pos)))
+              (populate-world world sample)
+              (->> (for [x (range width) y (range height)] [x y])
+                   (filter #(some? (get-in world %)))))
+      (populate-world world sample))))
 
 (defn gen-world
   "Creates a new empty world of given size."
@@ -192,7 +189,7 @@
               (let [cell (get-in world pos)
                     world (-> world
                               (collapse pos (weighted-random cell weights))
-                              (collapse-neighbors recipe pos))]
+                              (collapse-neighbors recipe pos weights))]
                 (when animate?
                   (callback world))
                 (vreset! *world world)
