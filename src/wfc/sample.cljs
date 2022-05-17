@@ -10,8 +10,8 @@
   (let [canvas (cu/create-canvas width height)
         ctx (.getContext canvas "2d")]
     (.drawImage ctx image 0 0)
-    (->> (for [x (range 0 width tile-size)]
-           (->> (for [y (range 0 height tile-size)
+    (->> (for [y (range 0 height tile-size)]
+           (->> (for [x (range 0 width tile-size)
                       :let [img (.getImageData ctx x y tile-size tile-size)]]
                   [(hash (vec img.data)) img])
                 (into [])))

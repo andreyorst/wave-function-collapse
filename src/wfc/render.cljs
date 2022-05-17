@@ -5,16 +5,19 @@
    [wfc.config :as config]
    [wfc.canvas-utils :as cu]))
 
-(defn- draw-world [ctx size tiles fallback world]
+(defn- draw-world [ctx size tiles sample-weights world]
   (loop [world world
-         x 0]
+         y 0]
     (when-let [[row & rows] world]
       (loop [row row
-             y 0]
+             x 0]
         (when-let [[cell & cells] row]
-          (cu/draw ctx (get tiles cell fallback) x y size)
-          (recur cells (+ y size))))
-      (recur rows (+ x size)))))
+          (let [canvas (cu/create-canvas size size)
+                _ (cu/init-canvas canvas (str (/ (Math/floor (* (impl/cell-entropy cell sample-weights) 10)) 10)))
+                fallback (cu/get-image (.getContext canvas "2d"))]
+            (cu/draw ctx (get tiles cell fallback) x y size)
+            (recur cells (+ x size)))))
+      (recur rows (+ y size)))))
 
 (defn- create-fallback-tile [tile-size]
   (let [canvas (cu/create-canvas tile-size tile-size)
@@ -25,16 +28,16 @@
 (defn- solve [world ctx size animate?]
   (let [{:keys [tiles sample]} @config/*state
         fallback (create-fallback-tile size)]
-    (impl/wfc world sample (partial draw-world ctx size tiles fallback) animate?)))
+    (impl/wfc world sample (partial draw-world ctx size tiles (impl/sample-weights sample)) animate?)))
 
 (defn- shift [world dir]
   (case dir
-    :up (mapv #(into [] (cons nil (butlast %))) world)
-    :down (mapv #(conj (into [] (drop 1) %) nil) world)
-    :right (conj (into [] (drop 1) world)
-                 (into [] (repeat (count (first world)) nil)))
-    :left (into [] (cons (into [] (repeat (count (first world)) nil))
-                         (into [] (butlast world))))))
+    :left (mapv #(into [] (cons nil (butlast %))) world)
+    :right (mapv #(conj (into [] (drop 1) %) nil) world)
+    :down (conj (into [] (drop 1) world)
+                (into [] (repeat (count (first world)) nil)))
+    :up (into [] (cons (into [] (repeat (count (first world)) nil))
+                       (into [] (butlast world))))))
 
 (defn toggle-animate
   "Reads the value of the `Animate` check box."
@@ -68,7 +71,7 @@
       (let [world (shift world-state dir)
             ctx (.getContext renderer "2d")]
         (swap! config/*state assoc :move? false)
-        (solve world ctx tile-size false)))
+        (solve world ctx tile-size true)))
     (config/display-error :render-error "Please generate an image")))
 
 (defn clear-render-view
