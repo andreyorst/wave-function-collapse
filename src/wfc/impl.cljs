@@ -129,11 +129,17 @@
   (loop [neighbors #{pos}
          world world]
     (if (seq neighbors)
-      (let [pos (->> neighbors
-                     (map (fn [pos] [(cell-entropy (get-in world pos) weights) pos]))
-                     (sort-by first)
-                     first
-                     second)
+      (let [pos (loop [pos (first neighbors)
+                       neighbors (next neighbors)
+                       lowest (cell-entropy (get-in world pos) weights)]
+                  (if neighbors
+                    (let [pos' (first neighbors)
+                          ent (cell-entropy (get-in world pos') weights)
+                          neighbors (next neighbors)]
+                      (if (< ent lowest)
+                        (recur pos' neighbors ent)
+                        (recur pos neighbors lowest)))
+                    pos))
             [world' next] (collapse-neighbors* world recipe pos)]
         (recur (if (= world world')
                  (disj neighbors pos)
