@@ -145,7 +145,7 @@
           (when-not world-state
             (swap! config/*state assoc :world-state
                    (impl/gen-world (/ render-view.width tile-size) (/ render-view.height tile-size))))
-          (swap! config/*state assoc-in [:world-state (/ x tile-size) (/ y tile-size)] (or tile-id nil))
+          (swap! config/*state assoc-in [:world-state (/ y tile-size) (/ x tile-size)] (or tile-id nil))
           (if tile-id
             (when-let [tile (get tiles tile-id)]
               (cu/draw ctx rendered-image 0 0 render-view.width render-view.height)
