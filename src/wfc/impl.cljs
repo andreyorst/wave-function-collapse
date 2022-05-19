@@ -115,17 +115,15 @@
            world world]
       (if-let [[neighbor & neighbors] neighbors]
         (let [[dir {pos :pos}] neighbor
-              c (get-cell world pos)]
-          (if (set? c)
-            (let [variants (set/intersection
-                            (if (coll? c) (set c) #{c})
-                            (if (set? cell)
-                              (into #{} (mapcat #(get-in recipe [% dir])) cell)
-                              (get-in recipe [cell dir])))]
-              (if (seq variants)
-                (recur neighbors (collapse world pos variants))
-                (recur neighbors world)))
-            (recur neighbors world)))
+              neighbor-cell (get-cell world pos)]
+          (let [variants (set/intersection
+                          (if (set? neighbor-cell) neighbor-cell #{neighbor-cell})
+                          (if (set? cell)
+                            (into #{} (mapcat #(get-in recipe [% dir])) cell)
+                            (get-in recipe [cell dir])))]
+            (if (seq variants)
+              (recur neighbors (collapse world pos variants))
+              (recur neighbors world))))
         [world neighboring-cells]))))
 
 (defn- collapse-neighbors
@@ -162,13 +160,14 @@
         world' (populate-world world sample)
         positions (->> (for [x (range width) y (range height)] [x y])
                        (filter #(and (not (set? (get-cell world' %)))
-                                     (some set? (map :cell (vals (get-neighbors world' %)))))))
-        positions (sort (fn [a b]
-                          (< (cell-entropy (apply set/union (vals (get recipe (get-cell world' a)))) weights)
-                             (cell-entropy (apply set/union (vals (get recipe (get-cell world' b)))) weights)))
-                        positions)]
-    (if (pre-filled? world)
-      [world' (or (first positions) [0 0])]
+                                     (some set? (map :cell (vals (get-neighbors world' %))))))
+                       (sort (fn [a b]
+                               (< (cell-entropy (apply set/union (vals (get recipe (get-cell world' a)))) weights)
+                                  (cell-entropy (apply set/union (vals (get recipe (get-cell world' b)))) weights)))))
+        world' (reduce (fn [world pos]
+                         (first (collapse-neighbors* world recipe pos))) world' positions)]
+    (if-let [pos (and (pre-filled? world) (first positions))]
+      [world' pos]
       [world' [(rand-int width) (rand-int height)]])))
 
 (defn gen-world
