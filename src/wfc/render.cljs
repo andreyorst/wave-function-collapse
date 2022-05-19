@@ -5,44 +5,48 @@
    [wfc.config :as config]
    [wfc.canvas-utils :as cu]))
 
-(defn- draw-world [ctx size tiles sample-weights world]
-  (loop [world world
-         y 0]
-    (when-let [[row & rows] world]
-      (loop [row row
-             x 0]
-        (when-let [[cell & cells] row]
-          (let [canvas (cu/create-canvas size size)
-                _ (cu/init-canvas canvas (str (/ (Math/floor (* (impl/cell-entropy cell sample-weights) 10)) 10)))
-                fallback (cu/get-image (.getContext canvas "2d"))]
-            (cu/draw ctx (get tiles cell fallback) x y size)
-            (recur cells (+ x size)))))
-      (recur rows (+ y size)))))
-
 (defn- create-fallback-tile [tile-size]
   (let [canvas (cu/create-canvas tile-size tile-size)
         ctx (.getContext canvas "2d")]
     (cu/draw-checkerboard ctx tile-size tile-size 16)
     (cu/get-image ctx)))
 
-(defn- solve [world ctx size animate?]
-  (let [{:keys [tiles sample]} @config/*state
-        fallback (create-fallback-tile size)]
-    (impl/wfc world sample (partial draw-world ctx size tiles (impl/sample-weights sample)) animate?)))
+(defn- create-entropy-tile [size cell weights]
+  (let [canvas (cu/create-canvas size size)
+        ctx (.getContext canvas "2d")]
+    (cu/init-canvas canvas (str (/ (Math/floor (* (impl/cell-entropy cell weights) 10)) 10)))
+    (cu/get-image ctx)))
 
-(defn- shift [world dir]
-  (case dir
-    :left (mapv #(into [] (cons nil (butlast %))) world)
-    :right (mapv #(conj (into [] (drop 1) %) nil) world)
-    :down (conj (into [] (drop 1) world)
-                (into [] (repeat (count (first world)) nil)))
-    :up (into [] (cons (into [] (repeat (count (first world)) nil))
-                       (into [] (butlast world))))))
+(defn- draw-world [ctx size tiles sample world]
+  (let [fallback (and (not (:show-entropy? @config/*state))
+                      (create-fallback-tile size))
+        weigths (impl/sample-weights sample)]
+    (loop [world world
+           y 0]
+      (when-let [[row & rows] world]
+        (loop [row row
+               x 0]
+          (when-let [[cell & cells] row]
+            (let [fallback (or fallback (create-entropy-tile size cell weigths))]
+              (cu/draw ctx (get tiles cell fallback) x y size)
+              (recur cells (+ x size)))))
+        (recur rows (+ y size))))))
+
+(defn- solve [world ctx size]
+  (let [{:keys [tiles sample]} @config/*state]
+    (impl/wfc world sample (partial draw-world ctx size tiles sample))))
 
 (defn toggle-animate
   "Reads the value of the `Animate` check box."
   [event]
-  (swap! config/*state assoc :animate? event.target.checked))
+  (let [val event.target.checked]
+    (swap! config/*state assoc :animate? val)
+    (set! (.-disabled (:entropy-button @config/*dom-elements)) (not val))))
+
+(defn toggle-entropy
+  "Reads the value of the `Show entropy` check box."
+  [event]
+  (swap! config/*state assoc :show-entropy? event.target.checked))
 
 (defn render
   "Render an image based on current tile set and rules.
@@ -55,24 +59,14 @@
         (config/clear-error :render-error)
         (let [ctx (.getContext renderer "2d")
               width renderer.width
-              height renderer.height]
-          (cu/draw-checkerboard ctx width height 16)
+              height renderer.height
+              animate? (:animate? @config/*state)]
+          (when animate?
+            (cu/draw-checkerboard ctx width height 16))
           (solve (or world-state
                      (impl/gen-world (/ width tile-size) (/ height tile-size)))
-                 ctx tile-size
-                 (:animate? @config/*state))))
+                 ctx tile-size)))
       (config/display-error :render-error "Please set tile size"))))
-
-(defn move
-  "Shifts the world in a given direction, and recomputes the image."
-  [dir]
-  (if-let [{:keys [world-state tile-size]} @config/*state]
-    (when-let [renderer (get @config/*dom-elements :render-view)]
-      (let [world (shift world-state dir)
-            ctx (.getContext renderer "2d")]
-        (swap! config/*state assoc :move? false)
-        (solve world ctx tile-size true)))
-    (config/display-error :render-error "Please generate an image")))
 
 (defn clear-render-view
   "Clears the output image, and resets the world state, so that the

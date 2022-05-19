@@ -8,8 +8,6 @@ There's also a built-in tile-based editor, that can be used to partially draw a 
 
 ![demo][3]
 
-Generated image later can be scrolled using arrow keys, automatically generating the image in given direction.
-
 ## Build
 
 Install `npm` and execute the following command in the project root:
@@ -20,4 +18,4 @@ After that open `index.html` in a browser.
 
 [1]: https://andreyorst.gitlab.io/2022-05-10-wave-function-collapse-algorithm-in-clojurescript
 [2]: https://andreyorst.gitlab.io/wave-function-collapse
-[3]: https://user-images.githubusercontent.com/19470159/168482842-47811dc0-4eeb-490b-ba4f-25faacbd3151.gif
+[3]: https://user-images.githubusercontent.com/19470159/169225363-30f52ae4-0c72-48e2-b8ab-14a61bf3dd78.gif

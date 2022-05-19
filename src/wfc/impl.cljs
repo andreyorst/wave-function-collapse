@@ -1,5 +1,5 @@
 (ns wfc.impl
-  "Implementation of the wave function collapse alrorithm."
+  "Implementation of the wave function collapse algorithm."
   (:require
    [clojure.set :as set]
    [wfc.config :as config]
@@ -9,7 +9,7 @@
   (into #{} (flatten sample)))
 
 (defn- get-cell [world [x y]]
-  (get (get world y) x))
+  (nth (nth world y) x))
 
 (defn- get-neighbors [m [x y]]
   (->> {:up [(dec x) y]
@@ -17,8 +17,8 @@
         :left [x (dec y)]
         :right [x (inc y)]}
        (into {}
-             (keep (fn [[dir pos]]
-                     (when-some [cell (get-cell m pos)]
+             (keep (fn [[dir [x y :as pos]]]
+                     (when-some [cell (get-in m [y x])]
                        [dir {:pos pos :cell cell}]))))))
 
 (defn- build-recipe [sample]
@@ -59,23 +59,35 @@
   by the entropy. Then the first value from each row is taken and
   sorted by the entropy again. The lowest entropy cell is then
   selected."
-  [world weights]
-  (let [width (count (first world))
-        height (count world)]
-    (loop [x 0
-           y 0
-           pos [x y]
-           lowest js/Number.MAX_SAFE_INTEGER]
-      (if (< y height)
-        (if (< x width)
-          (let [pos' [x y]
-                cell (get-cell world pos')
-                ent (cell-entropy cell weights)]
-            (if (and (< ent lowest) (set? cell))
-              (recur (inc x) y pos' ent)
-              (recur (inc x) y pos lowest)))
-          (recur 0 (inc y) pos lowest))
-        pos))))
+  ([world weights]
+   (let [width (count (first world))
+         height (count world)]
+     (loop [x 0
+            y 0
+            pos [x y]
+            lowest js/Number.MAX_SAFE_INTEGER]
+       (if (< y height)
+         (if (< x width)
+           (let [pos' [x y]
+                 cell (get-cell world pos')
+                 ent (cell-entropy cell weights)]
+             (if (and (< ent lowest) (set? cell))
+               (recur (inc x) y pos' ent)
+               (recur (inc x) y pos lowest)))
+           (recur 0 (inc y) pos lowest))
+         pos))))
+  ([cells world weights]
+   (loop [pos (first cells)
+          cells (next cells)
+          lowest (cell-entropy (get-cell world pos) weights)]
+     (if cells
+       (let [pos' (first cells)
+             ent (cell-entropy (get-cell world pos') weights)
+             cells  (next cells)]
+         (if (< ent lowest)
+           (recur pos' cells ent)
+           (recur pos cells lowest)))
+       pos))))
 
 (defn- weighted-random [elements weights]
   (let [variants (reduce (fn [m k] (assoc m k (weights k))) {} elements)
@@ -125,17 +137,7 @@
   (loop [neighbors #{pos}
          world world]
     (if (seq neighbors)
-      (let [pos (loop [pos (first neighbors)
-                       neighbors (next neighbors)
-                       lowest (cell-entropy (get-cell world pos) weights)]
-                  (if neighbors
-                    (let [pos' (first neighbors)
-                          ent (cell-entropy (get-cell world pos') weights)
-                          neighbors (next neighbors)]
-                      (if (< ent lowest)
-                        (recur pos' neighbors ent)
-                        (recur pos neighbors lowest)))
-                    pos))
+      (let [pos (lowest-entropy-cell neighbors world weights)
             [world' next] (collapse-neighbors* world recipe pos)]
         (recur (if (= world world')
                  (disj neighbors pos)
@@ -150,19 +152,24 @@
 (defn- pre-filled? [world]
   (some some? (flatten world)))
 
-(defn- init-world
-  "Initializes the world with a given sample, and afterwards collapses
-  cells if world was pre-filled with information."
-  [world sample recipe]
+(defn- init-world-and-get-starting-pos
+  "Returns super-position populated world and the least random starting
+  point, if the world was pre-filled before. Otherwise returns a
+  random point."
+  [world recipe sample weights]
   (let [width (count (first world))
-        height (count world)]
+        height (count world)
+        world' (populate-world world sample)
+        positions (->> (for [x (range width) y (range height)] [x y])
+                       (filter #(and (not (set? (get-cell world' %)))
+                                     (some set? (map :cell (vals (get-neighbors world' %)))))))
+        positions (sort (fn [a b]
+                          (< (cell-entropy (apply set/union (vals (get recipe (get-cell world' a)))) weights)
+                             (cell-entropy (apply set/union (vals (get recipe (get-cell world' b)))) weights)))
+                        positions)]
     (if (pre-filled? world)
-      (reduce (fn [world pos]
-                (first (collapse-neighbors* world recipe pos)))
-              (populate-world world sample)
-              (->> (for [x (range width) y (range height)] [x y])
-                   (filter #(some? (get-cell world %)))))
-      (populate-world world sample))))
+      [world' (or (first positions) [0 0])]
+      [world' [(rand-int width) (rand-int height)]])))
 
 (defn gen-world
   "Creates a new empty world of given size."
@@ -173,32 +180,26 @@
 (defn wfc
   "Main algorithm loop.
   The loop itself is done in a callback style by calling
-  `.requestAnimationFrame` method of a `window`.  The world state is
-  captured in a mutable closure."
-  [world sample callback animate?]
+  `.requestAnimationFrame` method of a `window`."
+  [world sample draw-callback]
   (let [recipe (build-recipe sample)
+        renderer (:render-view @config/*dom-elements)
+        ctx (.getContext renderer "2d")
         weights (sample-weights sample)
-        *state (volatile! (let [initialized (init-world world sample recipe)]
-                            [initialized
-                             (if (pre-filled? world)
-                               (lowest-entropy-cell initialized weights)
-                               [(rand-int (count (first world)))
-                                (rand-int (count world))])]))
-        compute
-        (fn compute []
-          (let [[world pos] @*state]
-            (if-not (done? world)
-              (let [cell (get-cell world pos)
-                    world (-> world
-                              (collapse pos (weighted-random cell weights))
-                              (collapse-neighbors recipe pos weights))]
-                (when animate?
-                  (callback world))
-                (vreset! *state [world (lowest-entropy-cell world weights)])
-                (.requestAnimationFrame js/window compute))
-              (do (callback world)
-                  (swap! config/*state assoc
-                         :world-state world
-                         :rendered-image (cu/get-image (.getContext (:render-view @config/*dom-elements) "2d"))
-                         :move? true)))))]
-    (compute)))
+        [world pos] (init-world-and-get-starting-pos world recipe sample weights)]
+    ((fn compute [world pos]
+       (if-not (done? world)
+         (let [cell (get-cell world pos)
+               world (cond-> world
+                       (set? cell) (collapse pos (weighted-random cell weights))
+                       true (collapse-neighbors recipe pos weights))
+               pos (lowest-entropy-cell world weights)]
+           (when (:animate? @config/*state)
+             (draw-callback world))
+           (.requestAnimationFrame js/window #(compute world pos)))
+         (do (draw-callback world)
+             (swap! config/*state assoc
+                    :world-state world
+                    :rendered-image (cu/get-image ctx)
+                    :move? true))))
+     world pos)))

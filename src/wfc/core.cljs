@@ -2,7 +2,6 @@
   (:require
    [wfc.canvas-utils :as cu]
    [wfc.editor :as editor]
-   [wfc.input :as input]
    [wfc.render :as render]
    [wfc.sample :as sample]
    [wfc.config :as config]))
@@ -26,6 +25,7 @@
    :render-view {["mousedown" "touchstart"] editor/on-press
                  ["mouseup" "touchend"] editor/on-release}
    :animate-button {"click" render/toggle-animate}
+   :entropy-button {"click" render/toggle-entropy}
    :tile-size-input {}
    :world-width-input {}
    :world-height-input {}
@@ -49,7 +49,6 @@
 (defn ^:dev/after-load init-elements []
   (doseq [[id events] elements-events]
     (init-element id events))
-  (set! (.-onkeydown js/window) input/on-key-press)
   (doseq [[img loader] examples]
     (when-let [example (.getElementById js/document img)]
       (.addEventListener example "click" loader))))
@@ -68,4 +67,6 @@
   (when-let [render-view (get @config/*dom-elements :render-view)]
     (cu/init-canvas render-view))
   (when-let [animate-button (get @config/*dom-elements :animate-button)]
-    (set! animate-button.checked true)))
+    (set! animate-button.checked true))
+  (when-let [entropy-button (get @config/*dom-elements :entropy-button)]
+    (set! entropy-button.checked false)))

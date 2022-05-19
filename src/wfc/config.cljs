@@ -13,7 +13,8 @@
                        :image nil
                        :image-width 0
                        :image-height 0
-                       :animate? true}))
+                       :animate? true
+                       :show-entropy? false}))
 
 (defonce dark-mode?
   (.-matches (js/window.matchMedia "(prefers-color-scheme: dark)")))
