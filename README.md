@@ -16,6 +16,6 @@ Install `npm` and execute the following command in the project root:
 
 After that open `index.html` in a browser.
 
-[1]: https://andreyorst.gitlab.io/2022-05-10-wave-function-collapse-algorithm-in-clojurescript
-[2]: https://andreyorst.gitlab.io/wave-function-collapse
+[1]: https://andreyor.st/posts/2022-05-10-wave-function-collapse-algorithm-in-clojurescript
+[2]: https://andreyor.st/wave-function-collapse
 [3]: https://user-images.githubusercontent.com/19470159/169225363-30f52ae4-0c72-48e2-b8ab-14a61bf3dd78.gif
